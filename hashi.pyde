@@ -8,7 +8,7 @@ def randInt(*argv):
 
 def randBetween(start, finish, direction):
     totalDistance = (finish - start).abso().maximum()
-    if totalDistance == 1:
+    if totalDistance == 0:
         return None
     return start + direction * randInt(1, totalDistance)
 
@@ -64,8 +64,8 @@ class Hashi:
             if unit(subtract(bridge[0], bridge[1])) != unit(direction):
                 pass
     
-    def in_bounds(self, island):
-        return island.x >= 0 and island.x < self.grid_size and island.y >= 0 and island.y < self.grid_size
+    def in_bounds(self, p):
+        return p.x >= 0 and p.x < self.grid_size and p.y >= 0 and p.y < self.grid_size
     
     def __init__(self, grid_size):
         self.grid_size = grid_size
@@ -100,22 +100,19 @@ class Hashi:
             else:
                 break
         
-        if maxIsland == randIsland:
-            raise Exception('Could not make new island from Island:{0} in Direction:{1}'.format(randIsland, )
         newIsland = randBetween(randIsland, maxIsland, randDirection)
-        print(str(randIsland), str(maxIsland), str(newIsland))
+        print(str(randIsland), str(maxIsland), str(randDirection), str(newIsland))
         if newIsland:
             self.islands[randIsland].bridges += 1
             print('updated bridges of', str(randIsland), self.islands[randIsland].bridges)
             self.islands[newIsland] = self.islands.get(newIsland, self.Island(0))
             self.islands[newIsland].bridges += 1
             print('updated bridges of', str(newIsland), self.islands[newIsland].bridges)
-            print({str(k): self.islands[k].bridges for k in self.islands.keys()})
             self.bridges.append((randIsland, newIsland))
     
     def init_game(self, n, a, b):
         # step 1 - placement of the islands
-        self.islands[Point(randInt(self.grid_size), randInt(self.grid_size))] = self.Island(0)
+        self.islands[Point(0, 0)] = self.Island(0)
         
         # for i in range(n-1):
             
