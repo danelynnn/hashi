@@ -1,5 +1,7 @@
 from p5 import *
 from random import randint
+from time import time
+from statistics import mean
 
 def randItem(lyst):
     return lyst[randint(0, len(lyst)-1)]
@@ -117,33 +119,34 @@ class Hashi:
     
     def init_game(self, n, a, b):
         # step 1 - placement of the islands
-        self.islands[Point(0, 0)] = self.Island(0)
+        self.islands[Point(randint(0, self.grid_size), randint(0, self.grid_size))] = self.Island(0)
         
         # for i in range(n-1):
             
     
     def draw_game(self):
-        for i in range(self.grid_size):
-            for j in range(self.grid_size):
+        for i in range(self.grid_size-1):
+            for j in range(self.grid_size-1):
                 fill(255)
                 stroke(200)
-                strokeWeight(1)
+                stroke_weight(1)
                 rect(40+i*50, 40+j*50, 50, 50)
         
         for (island1, island2) in self.bridges:
             stroke(randint(0, 255), randint(0, 255), randint(0, 255))
-            strokeWeight(2)
+            stroke_weight(2)
             
             line(40 + island1.x * 50, 40 + island1.y * 50, 40 + island2.x * 50, 40 + island2.y * 50)
         
         for (loc, island) in self.islands.items():
             stroke(0)
-            strokeWeight(2)
+            stroke_weight(2)
             fill(255)
             circle(40+loc.x*50, 40+loc.y*50, 30)
             fill(0)
-            textAlign(CENTER, CENTER)
-            text(str(island.numTotalBridges), 40+loc.x*50, 40+loc.y*50)
+            noStroke()
+            text_align(CENTER, BOTTOM)
+            text(str(island.numTotalBridges), 40+loc.x*50, 40+loc.y*50+10)
 
 def key_released():
     global game
@@ -153,18 +156,36 @@ def setup():
     global game
     game = Hashi(10)
     
-    # # Create the font
-    # f = create_font("data/OperatorMono.ttf", 52)
+    # Create the font
+    # f = create_font("data/OperatorMono.ttf", 16)
     # text_font(f)
     text_align('CENTER')
+    text_size(20)
     
     size(720, 720)
+
+frameRate = 0
+lastFrame = time()
+lastFrameRates = []
 
 def draw():
     global game
     background(255)
     game.draw_game()
 
+    global lastFrame
+    timeDelta = time() - lastFrame
+    lastFrame = time()
+    frameRate = 1/timeDelta
+
+    lastFrameRates.append(frameRate)
+    if len(lastFrameRates) > 30:
+        lastFrameRates.pop(0)
+
+    noStroke()
+    fill(0, 255, 0)
+    text_align('RIGHT', 'BOTTOM')
+    text(str(int(mean(lastFrameRates))), 710, 30)
+
 if __name__ == '__main__':
-    run()
-    
+    run(renderer='skia')
