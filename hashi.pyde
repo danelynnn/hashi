@@ -54,15 +54,30 @@ def unit(p):
 
 class Hashi:
     class Island:
-        def __init__(self, bridges):
-            self.bridges = bridges
-            self.remaining = bridges
+        def __init__(self, numBridges):
+            self.numTotalBridges = numBridges
+            self.numRemainingBridges = numBridges  
     
-    def find_closest_bridge(self, island, direction):
-        for bridge in self.bridges:
-            # if bridge is perpendicular
-            if unit(subtract(bridge[0], bridge[1])) != unit(direction):
-                pass
+    def is_valid(self, p):
+        # Ensures given point is within bounds, does not contain an island, and does not intersect with a bridge
+        def is_between_inclusive(a, b, c):
+            return (a <= b and b <= c) or (c <= b and b <= a) 
+        if not self.in_bounds(p):
+            print("Point {0} not in bounds.".format(p))
+            return False
+        if p in self.islands:
+            print("Point {0} collides with an island.".format(p))
+            return False
+        for (start, end) in self.bridges:
+            if (start.x == end.x):
+                if start.x == p.x and is_between_inclusive(start.y, p.y, end.y):
+                    return False
+            elif (start.y == end.y):
+                if start.y == p.y and is_between_inclusive(start.x, p.x, end.x):
+                    return False
+            else:
+                raise Exception("Yo, what is this bridge? Start:{0}, End:{1}".format(start, end))
+        return True
     
     def in_bounds(self, p):
         return p.x >= 0 and p.x < self.grid_size and p.y >= 0 and p.y < self.grid_size
@@ -83,31 +98,23 @@ class Hashi:
         randDirection = randItem([Point(0, -1), Point(0, 1), Point(-1, 0), Point(1, 0)])
         
         # probe in direction
-        found = False
-        
-        maxIsland = randIsland
-        while self.in_bounds(maxIsland):
-            test = maxIsland + randDirection
+        furthestPoint = randIsland
+        while self.in_bounds(furthestPoint):
+            nextPoint = furthestPoint + randDirection
             
-            if test in self.islands: # if Island already exists
-                break
-            # elif test is fucked:
-            #     break
-            
-            if self.in_bounds(test):
-                found = True
-                maxIsland = test
+            if self.is_valid(nextPoint):
+                furthestPoint = nextPoint
             else:
                 break
         
-        newIsland = randBetween(randIsland, maxIsland, randDirection)
-        print(str(randIsland), str(maxIsland), str(randDirection), str(newIsland))
+        newIsland = randBetween(randIsland, furthestPoint, randDirection)
+        print("randIsland:{0}, furthestPoint:{1}, randDirection:{2}, newIsland:{3}".format(str(randIsland), str(furthestPoint), str(randDirection), str(newIsland)))
         if newIsland:
-            self.islands[randIsland].bridges += 1
-            print('updated bridges of', str(randIsland), self.islands[randIsland].bridges)
+            self.islands[randIsland].numTotalBridges += 1
+            print('updated bridges of', str(randIsland), self.islands[randIsland].numTotalBridges)
             self.islands[newIsland] = self.islands.get(newIsland, self.Island(0))
-            self.islands[newIsland].bridges += 1
-            print('updated bridges of', str(newIsland), self.islands[newIsland].bridges)
+            self.islands[newIsland].numTotalBridges += 1
+            print('updated bridges of', str(newIsland), self.islands[newIsland].numTotalBridges)
             self.bridges.append((randIsland, newIsland))
     
     def init_game(self, n, a, b):
@@ -139,7 +146,7 @@ class Hashi:
             circle(40+loc.x*50, 40+loc.y*50, 30)
             fill(0)
             textAlign(CENTER, CENTER)
-            text(island.bridges, 40+loc.x*50, 40+loc.y*50)
+            text(island.numTotalBridges, 40+loc.x*50, 40+loc.y*50)
 
 def keyReleased():
     global game
