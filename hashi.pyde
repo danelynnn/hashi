@@ -71,54 +71,51 @@ class Hashi:
         self.grid_size = grid_size
         # self.grid = [[0 for x in range(grid_size)] for y in range(grid_size)]
         # self.grid[2][2] = self.Island(3)
-        self.field = {} # Dict[Point, Island]
-        # self.field[(2, 2)] = self.Island(3)
+        self.islands = {} # Dict[Point, Island]
+        # self.islands[(2, 2)] = self.Island(3)
         self.bridges = []
         
         self.init_game(10, .5, .5)
     
     def make_island(self):
         # self.bridges = []
-        randIsland = randItem(list(self.field.keys()))
+        randIsland = randItem(list(self.islands.keys()))
         randDirection = randItem([Point(0, -1), Point(0, 1), Point(-1, 0), Point(1, 0)])
         
         # probe in direction
         found = False
         
-        while not found:
-            maxIsland = randIsland
-            while self.in_bounds(maxIsland):
-                test = maxIsland + randDirection
-                
-                if test in self.field:
-                    break
-                # elif test is fucked:
-                #     break
-                
-                if self.in_bounds(test):
-                    found = True
-                    maxIsland = test
-                else:
-                    break
+        maxIsland = randIsland
+        while self.in_bounds(maxIsland):
+            test = maxIsland + randDirection
             
-            if not found:
-                randDirection = [Point(0, -1), Point(0, 1), Point(-1, 0), Point(1, 0)][randInt(4)]
-                print('finding new direction', randDirection)
+            if test in self.islands: # if Island already exists
+                break
+            # elif test is fucked:
+            #     break
+            
+            if self.in_bounds(test):
+                found = True
+                maxIsland = test
+            else:
+                break
         
+        if maxIsland == randIsland:
+            raise Exception('Could not make new island from Island:{0} in Direction:{1}'.format(randIsland, )
         newIsland = randBetween(randIsland, maxIsland, randDirection)
         print(str(randIsland), str(maxIsland), str(newIsland))
         if newIsland:
-            self.field[randIsland].bridges += 1
-            print('updated bridges of', str(randIsland), self.field[randIsland].bridges)
-            self.field[newIsland] = self.field.get(newIsland, self.Island(0))
-            self.field[newIsland].bridges += 1
-            print('updated bridges of', str(newIsland), self.field[newIsland].bridges)
-            print({str(k): self.field[k].bridges for k in self.field.keys()})
+            self.islands[randIsland].bridges += 1
+            print('updated bridges of', str(randIsland), self.islands[randIsland].bridges)
+            self.islands[newIsland] = self.islands.get(newIsland, self.Island(0))
+            self.islands[newIsland].bridges += 1
+            print('updated bridges of', str(newIsland), self.islands[newIsland].bridges)
+            print({str(k): self.islands[k].bridges for k in self.islands.keys()})
             self.bridges.append((randIsland, newIsland))
     
     def init_game(self, n, a, b):
         # step 1 - placement of the islands
-        self.field[Point(randInt(self.grid_size), randInt(self.grid_size))] = self.Island(0)
+        self.islands[Point(randInt(self.grid_size), randInt(self.grid_size))] = self.Island(0)
         
         # for i in range(n-1):
             
@@ -138,7 +135,7 @@ class Hashi:
             
             line(40 + island1.x * 50, 40 + island1.y * 50, 40 + island2.x * 50, 40 + island2.y * 50)
         
-        for (loc, island) in self.field.items():
+        for (loc, island) in self.islands.items():
             stroke(0)
             strokeWeight(2)
             fill(255)
