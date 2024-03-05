@@ -1,5 +1,8 @@
 from copy import copy
 
+def randItem(lyst):
+    return lyst[randInt(len(lyst))]
+
 def randInt(*argv):
     return int(random(*argv))
 
@@ -68,16 +71,16 @@ class Hashi:
         self.grid_size = grid_size
         # self.grid = [[0 for x in range(grid_size)] for y in range(grid_size)]
         # self.grid[2][2] = self.Island(3)
-        self.field = {}
+        self.field = {} # Dict[Point, Island]
         # self.field[(2, 2)] = self.Island(3)
         self.bridges = []
         
         self.init_game(10, .5, .5)
     
     def make_island(self):
-        self.bridges = []
-        randIsland = list(self.field.keys())[randInt(len(self.field.keys()))]
-        randDirection = [Point(0, -1), Point(0, 1), Point(-1, 0), Point(1, 0)][randInt(4)]
+        # self.bridges = []
+        randIsland = randItem(list(self.field.keys()))
+        randDirection = randItem([Point(0, -1), Point(0, 1), Point(-1, 0), Point(1, 0)])
         
         # probe in direction
         found = False
@@ -100,6 +103,7 @@ class Hashi:
             
             if not found:
                 randDirection = [Point(0, -1), Point(0, 1), Point(-1, 0), Point(1, 0)][randInt(4)]
+                print('finding new direction', randDirection)
         
         newIsland = randBetween(randIsland, maxIsland, randDirection)
         print(str(randIsland), str(maxIsland), str(newIsland))
