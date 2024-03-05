@@ -1,6 +1,9 @@
 # Overpriced fonts
 data/OperatorMono.ttf
 
+# Autosave files
+*.autosave
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

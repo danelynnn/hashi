@@ -1,4 +1,3 @@
-import operator
 from copy import copy
 
 def randInt(*argv):
@@ -149,9 +148,6 @@ def keyReleased():
     game.make_island()
 
 def setup():
-    font = createFont('OperatorMono.ttf', 128)
-    textFont(font, 24)
-
     global game
     game = Hashi(10)
     
