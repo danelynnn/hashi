@@ -1,4 +1,4 @@
-final boolean DEBUG_MODE = true;
+final boolean DEBUG_MODE = false;
 final boolean CHEATING_MODE = true;
 final int SQUARE_SIZE = 50;
 
@@ -124,6 +124,7 @@ class Board {
     return addIsland(1, x, y);
   }
   
+  // TODO: collision detection lol
   public void addBridge(Island i1, Island i2) {
     for (Bridge b: bridges) {
       if (b.i1 == i1 && b.i2 == i2) {
@@ -209,6 +210,22 @@ class Board {
     }
     for (Island i: islands) {
       i.draw();
+    }
+    if (DEBUG_MODE) {
+      for (int i=0; i<this.w; i++) {
+        for (int j=0; j<this.h; j++) {
+          noStroke();
+          fill(200);
+          textAlign(LEFT, TOP);
+          textSize(12);
+          text(i, i*SQUARE_SIZE+10, j*SQUARE_SIZE);
+          text(j, i*SQUARE_SIZE, j*SQUARE_SIZE+10);
+          
+          stroke(0);
+          strokeWeight(5);
+          point(i*SQUARE_SIZE, j*SQUARE_SIZE);
+        }
+      }
     }
     popMatrix();
   }
@@ -305,12 +322,21 @@ public void draw() {
   translate(20, 20);
   board.draw();
   
-  pushMatrix();
-  translate(SQUARE_SIZE, SQUARE_SIZE);
-  point(closestCol * SQUARE_SIZE, closestRow * SQUARE_SIZE);
-  popMatrix();
+  // show cursor position
+  if (DEBUG_MODE) {
+    pushMatrix();
+    translate(SQUARE_SIZE, SQUARE_SIZE);
+    stroke(255,0,0);
+    point(closestCol * SQUARE_SIZE, closestRow * SQUARE_SIZE);
+    popMatrix();
+  }
   popMatrix();
   
-  textAlign(CENTER, TOP);
-  text(board.sum, 600, 20);
+  if (DEBUG_MODE) {
+    noStroke();
+    fill(0);
+    textSize(SQUARE_SIZE/2);
+    textAlign(CENTER, TOP);
+    text(board.sum, 600, 20);
+  }
 }
