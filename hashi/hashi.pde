@@ -1,6 +1,6 @@
 import java.util.HashSet;
 
-final boolean DEBUG_MODE = false;
+final boolean DEBUG_MODE = true;
 final boolean CRUTCH_MODE = true;
 final int SQUARE_SIZE = 50;
 
@@ -146,7 +146,9 @@ class Board {
   HashSet<Island> islands;
   HashMap<IslandPair, Bridge> bridges;
   int w, h;
-  int sum;
+  
+  private int sum;
+  public int win;
   
   public Board(int w, int h) {
     this.w = w;
@@ -156,10 +158,33 @@ class Board {
     bridges = new HashMap<IslandPair, Bridge>();
   }
   
+  private int dfs(Island start, HashSet<Island> visited) {
+    int count = 1;
+    visited.add(start);
+    
+    for (Bridge b : bridges.values()) {
+      if (b.strength > 0) {
+        if (b.i1 == start && !visited.contains(b.i2))
+          count += dfs(b.i2, visited);
+        else if (b.i2 == start && !visited.contains(b.i1))
+          count += dfs(b.i1, visited);
+      }
+    }
+    
+    return count;
+  }
+  public int dfs(Island start) {
+    return dfs(start, new HashSet<Island>());
+  }
+  
   public void calculateSum() {
-    this.sum = 0;
-    for (Island i: board.islands)
+    sum = 0;
+    for (Island i: islands)
       sum += abs(i.remaining());
+    
+    //if (sum == 0) {
+      win = dfs(islands.iterator().next());
+    //}
   }
   
   public Island addIsland(int number, int x, int y) {
@@ -184,7 +209,6 @@ class Board {
     return addIsland(1, x, y);
   }
   
-  // TODO: collision detection lol
   public void addBridge(IslandPair ip, int strength) {
     if (bridges.containsKey(ip)) {
       Bridge existingBridge = bridges.get(ip);
@@ -348,10 +372,12 @@ public void mouseMoved() {
 public void mouseReleased() {
   // this better not be on an existing island is2g
   IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
-  if (mouseButton == LEFT) {
-    board.addBridge(best);
-  } else if (mouseButton == RIGHT) {
-    board.addBridge(best, -1);
+  if (best != null) {
+    if (mouseButton == LEFT) {
+      board.addBridge(best);
+    } else if (mouseButton == RIGHT) {
+      board.addBridge(best, -1);
+    }
   }
 }
 
@@ -423,6 +449,6 @@ public void draw() {
     fill(0);
     textSize(SQUARE_SIZE/2);
     textAlign(CENTER, TOP);
-    text(board.sum, 600, 20);
+    text(board.win, 600, 20);
   }
 }
