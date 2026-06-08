@@ -1,6 +1,10 @@
+import java.util.HashSet;
+
 final boolean DEBUG_MODE = false;
-final boolean CHEATING_MODE = true;
+final boolean CRUTCH_MODE = true;
 final int SQUARE_SIZE = 50;
+
+// TODO: add confetti
 
 class Island {
   int number;
@@ -25,6 +29,14 @@ class Island {
     return number - bridges;
   }
   
+  public boolean equals(Object other) {
+    Island otherIsland = (Island)other;
+    return this.x == otherIsland.x && this.y == otherIsland.y;
+  }
+  public int hashCode() {
+    return parseInt("" + x + y);
+  }
+  
   public void draw() {
     stroke(0);
     strokeWeight(3);
@@ -34,37 +46,83 @@ class Island {
     textSize(SQUARE_SIZE/2);
     textAlign(CENTER, CENTER);
     fill(0);
-    text(CHEATING_MODE ? remaining() : number, this.x * SQUARE_SIZE, this.y * SQUARE_SIZE-3);
+    text(CRUTCH_MODE ? remaining() : number, this.x * SQUARE_SIZE, this.y * SQUARE_SIZE-6);
   }
+  
+  public String toString() {
+    return "(" + x + ", " + y + ")";
+  }
+}
+
+class IslandPair {
+  Island i1, i2;
+  
+  public IslandPair(Island i1, Island i2) {
+    this.i1 = i1;
+    this.i2 = i2;
+  }
+  
+  public boolean equals(Object other) {
+    IslandPair otherIP = (IslandPair)other;
+    return (this.i1.equals(otherIP.i1) && this.i2.equals(otherIP.i2)) ||
+           (this.i1.equals(otherIP.i2) && this.i2.equals(otherIP.i1));
+  }
+  public int hashCode() {
+    return i1.hashCode() + i2.hashCode();
+  }
+}
+
+// is n between x1 and x2
+public boolean between(int n, int x1, int x2) {
+  if (x1 < x2)
+    return x1 < n && n < x2;
+  else
+    return x2 < n && n < x1;
 }
 
 class Bridge {
   Island i1, i2;
   int strength;
   
-  public Bridge(Island i1, Island i2, int strength) {
-    this.i1 = i1;
-    this.i2 = i2;
-    this.strength = strength;
-    this.i1.bridges += strength;
-    this.i2.bridges += strength;
+  public Bridge(IslandPair ip, int strength) {
+    this.i1 = ip.i1;
+    this.i2 = ip.i2;
+    
+    this.strengthen(strength);
   }
   
-  public Bridge(Island i1, Island i2) {
-    this(i1, i2, 1);
+  public Bridge(IslandPair ip) {
+    this(ip, 1);
+  }
+  
+  public void strengthen(int amount) {
+    // reset islands' bridge count
+    i1.bridges -= strength;
+    i2.bridges -= strength;
+    
+    // calculate new bridge strength
+    strength += amount;
+    strength %= 3;
+    if (strength<0) strength += 3;
+    
+    // reapply bridge count to islands
+    i1.bridges += strength;
+    i2.bridges += strength;
   }
   
   public void strengthen() {
-    if (strength < 2) {
-      strength++;
-      this.i1.bridges++;
-      this.i2.bridges++;
-    } else {
-      strength = 0;
-      this.i1.bridges -= 2;
-      this.i2.bridges -= 2;
-    }
+    strengthen(1);
   }
+  
+  //public boolean collides(Island i1, Island i2) {
+  //  // if this bridge is horizontal
+  //  if (this.i1.y == this.i2.y) {
+  //    if (i1.x == i2.x) { // and the proposed bridge is vertical
+  //      return between(i1.x, this.i1.x, this.i2.y) &&
+  //             between(i;
+  //    }
+  //  }
+  //}
   
   public void draw() {
     if (strength == 1) {
@@ -82,9 +140,11 @@ class Bridge {
   }
 }
 
+IslandPair potentialTest;
+
 class Board {
-  ArrayList<Island> islands;
-  ArrayList<Bridge> bridges;
+  HashSet<Island> islands;
+  HashMap<IslandPair, Bridge> bridges;
   int w, h;
   int sum;
   
@@ -92,8 +152,8 @@ class Board {
     this.w = w;
     this.h = h;
     
-    islands = new ArrayList<Island>();
-    bridges = new ArrayList<Bridge>();
+    islands = new HashSet<Island>();
+    bridges = new HashMap<IslandPair, Bridge>();
   }
   
   public void calculateSum() {
@@ -125,24 +185,26 @@ class Board {
   }
   
   // TODO: collision detection lol
-  public void addBridge(Island i1, Island i2) {
-    for (Bridge b: bridges) {
-      if (b.i1 == i1 && b.i2 == i2) {
-        b.strengthen();
-        calculateSum();
-        return;
-      }
+  public void addBridge(IslandPair ip, int strength) {
+    if (bridges.containsKey(ip)) {
+      Bridge existingBridge = bridges.get(ip);
+      existingBridge.strengthen(strength);
+    } else {
+      potentialTest = ip;
+      bridges.put(ip, new Bridge(ip, strength));
     }
-    bridges.add(new Bridge(i1, i2));
     calculateSum();
   }
   
-  public void addBridge(Island i1, Island i2, int strength) {
-    bridges.add(new Bridge(i1, i2, strength));
-    calculateSum();
+  public void addBridge(IslandPair ip) {
+    addBridge(ip, 1);
   }
   
-  public void makeBestBridge(int x, int y, boolean colBias) {
+  // TODO: check collisions
+  public IslandPair getBestIslandPair(int x, int y, boolean colBias) {
+    if (islands.contains(new Island(x, y)))
+      return null;
+    
     Island closestLeft = null, closestRight = null, closestTop = null, closestBottom = null;
     
     for (Island i: islands) {
@@ -159,28 +221,33 @@ class Board {
       } else if (i.x == x) { // if island is on the same column as target
         if (i.y < y) { // if island is above target
           // if island is closer, woohoo new
-          if (closestTop == null || i.y > closestTop.x)
+          if (closestTop == null || i.y > closestTop.y)
             closestTop = i;
         } else if (i.y > y) { // if island is below target
           // if island is closer, woohoo new
-          if (closestBottom == null || i.x < closestBottom.x)
+          if (closestBottom == null || i.y < closestBottom.y)
             closestBottom = i;
         }
       }
     }
     
-    if (closestLeft != null && closestRight != null) { // if there's a valid horizontal bridge
-      if (closestTop != null && closestBottom != null) { // if there's also a valid vertical bridge
-        if (colBias) // tiebreaker
-          addBridge(closestTop, closestBottom); // add the vertical bridge
-        else
-          addBridge(closestLeft, closestRight); // add the horizontal bridge
-      } else {
-        addBridge(closestLeft, closestRight); // add the horizontal bridge
-      }
-    } else if (closestTop != null && closestBottom != null) { // if there's a valid vertical bridge
-      addBridge(closestTop, closestBottom);
+    // TODO: collision detection
+    IslandPair closestHorizontal = null, closestVertical = null; // candidates
+    if (closestLeft != null && closestRight != null) {
+      closestHorizontal = new IslandPair(closestLeft, closestRight);
     }
+    if (closestTop != null && closestBottom != null) {
+      closestVertical = new IslandPair(closestTop, closestBottom);
+    }
+    
+    if (closestHorizontal != null && closestVertical != null)
+      return colBias ? closestVertical : closestHorizontal;
+    else if (closestHorizontal != null)
+      return closestHorizontal;
+    else if (closestVertical != null)
+      return closestVertical;
+    else
+      return null;
   }
   
   public void draw() {
@@ -196,21 +263,31 @@ class Board {
     strokeWeight(2);
     // draw vertical lines
     for (int x=0; x<this.w; x++) {
-      line(x * SQUARE_SIZE + SQUARE_SIZE, SQUARE_SIZE/2, x * SQUARE_SIZE + SQUARE_SIZE, boundsY - SQUARE_SIZE/2);
+      line(x * SQUARE_SIZE + SQUARE_SIZE, SQUARE_SIZE/3, x * SQUARE_SIZE + SQUARE_SIZE, boundsY - SQUARE_SIZE/3);
     }
     // draw horizontal lines
     for (int y=0; y<this.h; y++) {
-      line(SQUARE_SIZE/2, y * SQUARE_SIZE + SQUARE_SIZE, boundsX - SQUARE_SIZE/2, y * SQUARE_SIZE + SQUARE_SIZE);
+      line(SQUARE_SIZE/3, y * SQUARE_SIZE + SQUARE_SIZE, boundsX - SQUARE_SIZE/3, y * SQUARE_SIZE + SQUARE_SIZE);
     }
     
     pushMatrix();
     translate(SQUARE_SIZE, SQUARE_SIZE);
-    for (Bridge b: bridges) {
+    for (Bridge b: bridges.values()) {
       b.draw();
     }
+    
+    // draw hovered island
+    IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
+    if (best != null) {
+      strokeWeight(3);
+      stroke(200);
+      line(best.i1.x * SQUARE_SIZE, best.i1.y * SQUARE_SIZE, best.i2.x * SQUARE_SIZE, best.i2.y * SQUARE_SIZE);
+    }
+    
     for (Island i: islands) {
       i.draw();
     }
+    
     if (DEBUG_MODE) {
       for (int i=0; i<this.w; i++) {
         for (int j=0; j<this.h; j++) {
@@ -269,22 +346,31 @@ public void mouseMoved() {
 }
 
 public void mouseReleased() {
-  board.makeBestBridge(closestCol, closestRow, colBias);
+  // this better not be on an existing island is2g
+  IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
+  if (mouseButton == LEFT) {
+    board.addBridge(best);
+  } else if (mouseButton == RIGHT) {
+    board.addBridge(best, -1);
+  }
 }
 
 public void setup() {
+  size(720, 720);
+  textFont(createFont("IdealBold.ttf", 32));
+  
   // id 8,618,892
-  board = new Board(7, 7);
-  Island i0 = board.addIsland(3, 0, 0);
-  Island i1 = board.addIsland(2, -1, 0);
-  Island i2 = board.addIsland(4, 1, 1);
-  Island i3 = board.addIsland(4, -2, 1);
-  Island i4 = board.addIsland(2, 2, 2);
-  Island i5 = board.addIsland(2, 1, 4);
-  Island i6 = board.addIsland(1, -1, -2);
-  Island i7 = board.addIsland(3, 0, -1);
-  Island i8 = board.addIsland(5, 2, -1);
-  Island i9 = board.addIsland(4, -2, -1);
+  //board = new Board(7, 7);
+  //Island i0 = board.addIsland(3, 0, 0);
+  //Island i1 = board.addIsland(2, -1, 0);
+  //Island i2 = board.addIsland(4, 1, 1);
+  //Island i3 = board.addIsland(4, -2, 1);
+  //Island i4 = board.addIsland(2, 2, 2);
+  //Island i5 = board.addIsland(2, 1, 4);
+  //Island i6 = board.addIsland(1, -1, -2);
+  //Island i7 = board.addIsland(3, 0, -1);
+  //Island i8 = board.addIsland(5, 2, -1);
+  //Island i9 = board.addIsland(4, -2, -1);
   //board.addBridge(i0, i1);
   //board.addBridge(i1, i6);
   //board.addBridge(i0, i7, 2);
@@ -295,24 +381,22 @@ public void setup() {
   //board.addBridge(i7, i8);
   //board.addBridge(i8, i9, 2);
   
-  // id 8,618,892
-  //board = new Board(7, 7);
-  //board.addIsland(4, 0, 0);
-  //board.addIsland(3, 2, 0);
-  //board.addIsland(1, 4, 0);
-  //board.addIsland(2, 6, 0);
-  //board.addIsland(5, 0, 2);
-  //board.addIsland(5, 2, 2);
-  //board.addIsland(2, -2, 2);
-  //board.addIsland(2, -1, 3);
-  //board.addIsland(2, 3, 4);
-  //board.addIsland(3, -2, 4);
-  //board.addIsland(3, 2, -2);
-  //board.addIsland(3, -1, -2);
-  //board.addIsland(3, 0, -1);
-  //board.addIsland(2, -3, -1);
-  
-  size(720, 720);
+  // 7x7 normal, id 8,173,271
+  board = new Board(7, 7);
+  board.addIsland(4, 0, 0);
+  board.addIsland(3, 2, 0);
+  board.addIsland(1, 4, 0);
+  board.addIsland(2, 6, 0);
+  board.addIsland(5, 0, 2);
+  board.addIsland(5, 2, 2);
+  board.addIsland(2, -2, 2);
+  board.addIsland(2, -1, 3);
+  board.addIsland(2, 3, 4);
+  board.addIsland(3, -2, 4);
+  board.addIsland(3, 2, -2);
+  board.addIsland(3, -1, -2);
+  board.addIsland(3, 0, -1);
+  board.addIsland(2, -3, -1);
 }
 
 public void draw() {
@@ -327,7 +411,9 @@ public void draw() {
     pushMatrix();
     translate(SQUARE_SIZE, SQUARE_SIZE);
     stroke(255,0,0);
-    point(closestCol * SQUARE_SIZE, closestRow * SQUARE_SIZE);
+    if (closestRow >= 0 && closestRow < 7 &&
+        closestCol >= 0 && closestCol < 7)
+      point(closestCol * SQUARE_SIZE, closestRow * SQUARE_SIZE);
     popMatrix();
   }
   popMatrix();
