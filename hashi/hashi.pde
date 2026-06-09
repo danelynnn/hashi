@@ -1,6 +1,6 @@
 import java.util.HashSet;
 
-final boolean DEBUG_MODE = true;
+final boolean DEBUG_MODE = false;
 final boolean CRUTCH_MODE = true;
 final int SQUARE_SIZE = 50;
 
@@ -143,9 +143,9 @@ class Bridge {
 IslandPair potentialTest;
 
 class Board {
+  int w, h;
   HashSet<Island> islands;
   HashMap<IslandPair, Bridge> bridges;
-  int w, h;
   
   private int sum;
   public int win;
@@ -156,6 +156,9 @@ class Board {
     
     islands = new HashSet<Island>();
     bridges = new HashMap<IslandPair, Bridge>();
+    
+    win = -1;
+    sum = 0;
   }
   
   private int dfs(Island start, HashSet<Island> visited) {
@@ -182,9 +185,10 @@ class Board {
     for (Island i: islands)
       sum += abs(i.remaining());
     
-    //if (sum == 0) {
+    if (sum == 0)
       win = dfs(islands.iterator().next());
-    //}
+    else
+      win = -1;
   }
   
   public Island addIsland(int number, int x, int y) {
@@ -397,32 +401,59 @@ public void setup() {
   //Island i7 = board.addIsland(3, 0, -1);
   //Island i8 = board.addIsland(5, 2, -1);
   //Island i9 = board.addIsland(4, -2, -1);
-  //board.addBridge(i0, i1);
-  //board.addBridge(i1, i6);
-  //board.addBridge(i0, i7, 2);
-  //board.addBridge(i2, i3, 2);
-  //board.addBridge(i2, i5, 2);
-  //board.addBridge(i4, i8, 2);
-  //board.addBridge(i3, i9, 2);
-  //board.addBridge(i7, i8);
-  //board.addBridge(i8, i9, 2);
+  //board.addBridge(new IslandPair(i0, i1));
+  //board.addBridge(new IslandPair(i1, i6));
+  //board.addBridge(new IslandPair(i0, i7), 2);
+  //board.addBridge(new IslandPair(i2, i3), 2);
+  //board.addBridge(new IslandPair(i2, i5), 2);
+  //board.addBridge(new IslandPair(i4, i8), 2);
+  //board.addBridge(new IslandPair(i3, i9), 2);
+  //board.addBridge(new IslandPair(i7, i8));
+  //board.addBridge(new IslandPair(i8, i9), 2);
   
   // 7x7 normal, id 8,173,271
-  board = new Board(7, 7);
-  board.addIsland(4, 0, 0);
-  board.addIsland(3, 2, 0);
-  board.addIsland(1, 4, 0);
-  board.addIsland(2, 6, 0);
-  board.addIsland(5, 0, 2);
-  board.addIsland(5, 2, 2);
-  board.addIsland(2, -2, 2);
-  board.addIsland(2, -1, 3);
-  board.addIsland(2, 3, 4);
-  board.addIsland(3, -2, 4);
-  board.addIsland(3, 2, -2);
-  board.addIsland(3, -1, -2);
-  board.addIsland(3, 0, -1);
-  board.addIsland(2, -3, -1);
+  //board = new Board(7, 7);
+  //board.addIsland(4, 0, 0);
+  //board.addIsland(3, 2, 0);
+  //board.addIsland(1, 4, 0);
+  //board.addIsland(2, 6, 0);
+  //board.addIsland(5, 0, 2);
+  //board.addIsland(5, 2, 2);
+  //board.addIsland(2, -2, 2);
+  //board.addIsland(2, -1, 3);
+  //board.addIsland(2, 3, 4);
+  //board.addIsland(3, -2, 4);
+  //board.addIsland(3, 2, -2);
+  //board.addIsland(3, -1, -2);
+  //board.addIsland(3, 0, -1);
+  //board.addIsland(2, -3, -1);
+  
+  // 10x10 hard, id 1,447,332
+  board = new Board(10, 10);
+  board.addIsland(3, 0, 0);
+  board.addIsland(4, 2, 0);
+  board.addIsland(5, 5, 0);
+  board.addIsland(2, -2, 0);
+  board.addIsland(2, 4, 1);
+  board.addIsland(2, 0, 2);
+  board.addIsland(4, -4, 2);
+  board.addIsland(5, -2, 2);
+  board.addIsland(3, 0, 4);
+  board.addIsland(5, 2, 4);
+  board.addIsland(3, 4, 4);
+  board.addIsland(4, 6, 4);
+  board.addIsland(2, -1, 4);
+  board.addIsland(3, -2, 5);
+  board.addIsland(5, 2, 6);
+  board.addIsland(1, 4, 6);
+  board.addIsland(2, -4, 7);
+  board.addIsland(1, -2, 7);
+  board.addIsland(2, 0, -2);
+  board.addIsland(2, 3, -2);
+  board.addIsland(6, 5, -2);
+  board.addIsland(4, -1, -2);
+  board.addIsland(3, 2, -1);
+  board.addIsland(1, -2, -1);
 }
 
 public void draw() {
@@ -446,9 +477,17 @@ public void draw() {
   
   if (DEBUG_MODE) {
     noStroke();
-    fill(0);
+    if (board.win == board.islands.size()) fill(0, 200, 0); else fill(0);
     textSize(SQUARE_SIZE/2);
     textAlign(CENTER, TOP);
     text(board.win, 600, 20);
+  } else {
+    if (board.win == board.islands.size()) {
+      noStroke();
+      fill(0, 200, 0);
+      textSize(SQUARE_SIZE/2);
+      textAlign(CENTER, TOP);
+      text("you win!!", 600, 20);
+    }
   }
 }
