@@ -54,12 +54,22 @@ class Island {
   }
 }
 
+boolean rangeOverlap(int start1, int stop1, int start2, int stop2) {
+  return (start1 < start2 && stop1 > stop2) ||
+         (start2 < start1 && stop2 > stop1);
+}
+
 class IslandPair {
   Island i1, i2;
   
   public IslandPair(Island i1, Island i2) {
     this.i1 = i1;
     this.i2 = i2;
+  }
+  
+  public boolean collides(Bridge b) {
+    return rangeOverlap(i1.x, i2.x, b.i1.x, b.i2.x) &&
+           rangeOverlap(i1.y, i2.y, b.i1.y, b.i2.y);
   }
   
   public boolean equals(Object other) {
@@ -113,16 +123,6 @@ class Bridge {
   public void strengthen() {
     strengthen(1);
   }
-  
-  //public boolean collides(Island i1, Island i2) {
-  //  // if this bridge is horizontal
-  //  if (this.i1.y == this.i2.y) {
-  //    if (i1.x == i2.x) { // and the proposed bridge is vertical
-  //      return between(i1.x, this.i1.x, this.i2.y) &&
-  //             between(i;
-  //    }
-  //  }
-  //}
   
   public void draw() {
     if (strength == 1) {
@@ -263,9 +263,23 @@ class Board {
     IslandPair closestHorizontal = null, closestVertical = null; // candidates
     if (closestLeft != null && closestRight != null) {
       closestHorizontal = new IslandPair(closestLeft, closestRight);
+      
+      boolean valid = true;
+      for (Bridge b: bridges.values())
+        if (closestHorizontal.collides(b))
+          valid = false;
+      
+      if (!valid) closestHorizontal = null;
     }
     if (closestTop != null && closestBottom != null) {
       closestVertical = new IslandPair(closestTop, closestBottom);
+      
+      boolean valid = true;
+      for (Bridge b: bridges.values())
+        if (closestVertical.collides(b))
+          valid = false;
+      
+      if (!valid) closestVertical = null;
     }
     
     if (closestHorizontal != null && closestVertical != null)
@@ -412,48 +426,48 @@ public void setup() {
   //board.addBridge(new IslandPair(i8, i9), 2);
   
   // 7x7 normal, id 8,173,271
-  //board = new Board(7, 7);
-  //board.addIsland(4, 0, 0);
-  //board.addIsland(3, 2, 0);
-  //board.addIsland(1, 4, 0);
-  //board.addIsland(2, 6, 0);
-  //board.addIsland(5, 0, 2);
-  //board.addIsland(5, 2, 2);
-  //board.addIsland(2, -2, 2);
-  //board.addIsland(2, -1, 3);
-  //board.addIsland(2, 3, 4);
-  //board.addIsland(3, -2, 4);
-  //board.addIsland(3, 2, -2);
-  //board.addIsland(3, -1, -2);
-  //board.addIsland(3, 0, -1);
-  //board.addIsland(2, -3, -1);
+  board = new Board(7, 7);
+  board.addIsland(4, 0, 0);
+  board.addIsland(3, 2, 0);
+  board.addIsland(1, 4, 0);
+  board.addIsland(2, 6, 0);
+  board.addIsland(5, 0, 2);
+  board.addIsland(5, 2, 2);
+  board.addIsland(2, -2, 2);
+  board.addIsland(2, -1, 3);
+  board.addIsland(2, 3, 4);
+  board.addIsland(3, -2, 4);
+  board.addIsland(3, 2, -2);
+  board.addIsland(3, -1, -2);
+  board.addIsland(3, 0, -1);
+  board.addIsland(2, -3, -1);
   
   // 10x10 hard, id 1,447,332
-  board = new Board(10, 10);
-  board.addIsland(3, 0, 0);
-  board.addIsland(4, 2, 0);
-  board.addIsland(5, 5, 0);
-  board.addIsland(2, -2, 0);
-  board.addIsland(2, 4, 1);
-  board.addIsland(2, 0, 2);
-  board.addIsland(4, -4, 2);
-  board.addIsland(5, -2, 2);
-  board.addIsland(3, 0, 4);
-  board.addIsland(5, 2, 4);
-  board.addIsland(3, 4, 4);
-  board.addIsland(4, 6, 4);
-  board.addIsland(2, -1, 4);
-  board.addIsland(3, -2, 5);
-  board.addIsland(5, 2, 6);
-  board.addIsland(1, 4, 6);
-  board.addIsland(2, -4, 7);
-  board.addIsland(1, -2, 7);
-  board.addIsland(2, 0, -2);
-  board.addIsland(2, 3, -2);
-  board.addIsland(6, 5, -2);
-  board.addIsland(4, -1, -2);
-  board.addIsland(3, 2, -1);
-  board.addIsland(1, -2, -1);
+  //board = new Board(10, 10);
+  //board.addIsland(3, 0, 0);
+  //board.addIsland(4, 2, 0);
+  //board.addIsland(5, 5, 0);
+  //board.addIsland(2, -2, 0);
+  //board.addIsland(2, 4, 1);
+  //board.addIsland(2, 0, 2);
+  //board.addIsland(4, -4, 2);
+  //board.addIsland(5, -2, 2);
+  //board.addIsland(3, 0, 4);
+  //board.addIsland(5, 2, 4);
+  //board.addIsland(3, 4, 4);
+  //board.addIsland(4, 6, 4);
+  //board.addIsland(2, -1, 4);
+  //board.addIsland(3, -2, 5);
+  //board.addIsland(5, 2, 6);
+  //board.addIsland(1, 4, 6);
+  //board.addIsland(2, -4, 7);
+  //board.addIsland(1, -2, 7);
+  //board.addIsland(2, 0, -2);
+  //board.addIsland(2, 3, -2);
+  //board.addIsland(6, 5, -2);
+  //board.addIsland(4, -1, -2);
+  //board.addIsland(3, 2, -1);
+  //board.addIsland(1, -2, -1);
 }
 
 public void draw() {

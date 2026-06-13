@@ -7,3 +7,4 @@ it's hashi (/hæʃi/)
 - collision detection
 - scraping from puzzles website
 - click n drag
+- confetti
