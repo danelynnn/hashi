@@ -167,3 +167,5 @@ cython_debug/
 
 *.ffs_db
 application.windows*
+
+*.code*

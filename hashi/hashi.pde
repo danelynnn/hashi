@@ -140,8 +140,6 @@ class Bridge {
   }
 }
 
-IslandPair potentialTest;
-
 class Board {
   int w, h;
   HashSet<Island> islands;
@@ -185,7 +183,7 @@ class Board {
     for (Island i: islands)
       sum += abs(i.remaining());
     
-    if (sum == 0)
+    if (sum == 0 && islands.size() > 0)
       win = dfs(islands.iterator().next());
     else
       win = -1;
@@ -208,7 +206,6 @@ class Board {
       println("island was attempted to be made out of bounds at " + x + " " + y);
     return null;
   }
-  
   public Island addIsland(int x, int y) {
     return addIsland(1, x, y);
   }
@@ -218,17 +215,14 @@ class Board {
       Bridge existingBridge = bridges.get(ip);
       existingBridge.strengthen(strength);
     } else {
-      potentialTest = ip;
       bridges.put(ip, new Bridge(ip, strength));
     }
     calculateSum();
   }
-  
   public void addBridge(IslandPair ip) {
     addBridge(ip, 1);
   }
   
-  // TODO: check collisions
   public IslandPair getBestIslandPair(int x, int y, boolean colBias) {
     if (islands.contains(new Island(x, y)))
       return null;
@@ -259,14 +253,13 @@ class Board {
       }
     }
     
-    // TODO: collision detection
     IslandPair closestHorizontal = null, closestVertical = null; // candidates
     if (closestLeft != null && closestRight != null) {
       closestHorizontal = new IslandPair(closestLeft, closestRight);
       
       boolean valid = true;
       for (Bridge b: bridges.values())
-        if (closestHorizontal.collides(b))
+        if (b.strength > 0 && closestHorizontal.collides(b))
           valid = false;
       
       if (!valid) closestHorizontal = null;
@@ -276,7 +269,7 @@ class Board {
       
       boolean valid = true;
       for (Bridge b: bridges.values())
-        if (closestVertical.collides(b))
+        if (b.strength > 0 && closestVertical.collides(b))
           valid = false;
       
       if (!valid) closestVertical = null;
@@ -290,6 +283,15 @@ class Board {
       return closestVertical;
     else
       return null;
+  }
+
+  public void reset() {
+    bridges.clear();
+    calculateSum();
+  }
+  public void hardReset() {
+    islands.clear();
+    reset();
   }
   
   public void draw() {
@@ -350,15 +352,163 @@ class Board {
   }
 }
 
+class BBox {
+  int x1, y1, x2, y2;
+
+  public BBox(int x1, int y1, int x2, int y2) {
+    this.x1 = x1;
+    this.y1 = y1;
+    this.x2 = x2;
+    this.y2 = y2;
+  }
+
+  public int width() {
+    return this.x2 - this.x1;
+  }
+  public int height() {
+    return this.y2 - this.y1;
+  }
+
+  public boolean enclose(int x, int y) {
+    return x >= x1 && x <= x2 && y >= y1 && y <= y2;
+  }
+}
+abstract class Widget {
+  BBox bounds;
+
+  public Widget(BBox bounds) {
+    this.bounds = bounds;
+  }
+
+  public void mouseMoved() {}
+  public void mouseClicked() {}
+  public void mouseWheel(MouseEvent event) {}
+  public void keyPressed() {}
+  public void draw() {}
+}
+class Option {
+  String key, value;
+  public Option(String key, String value) {
+    this.key = key;
+    this.value = value;
+  }
+}
+class ComboBox extends Widget {
+  Option[] options;
+  int selected;
+
+  private boolean hover;
+
+  public ComboBox(int x, int y, int w, int h, Option[] options) {
+    super(new BBox(x, y, x+w, y+h));
+    this.options = options;
+    this.selected = 0;
+  }
+  public ComboBox(int x, int y, int w, Option[] options) {
+    this(x, y, w, 30, options);
+  }
+
+  public void mouseMoved() {
+    hover = this.bounds.enclose(mouseX, mouseY);
+  }
+
+  public void mouseWheel(MouseEvent event) {
+    if (this.bounds.enclose(mouseX, mouseY)) {
+      selected += event.getCount();
+      
+      selected %= options.length;
+      if (selected < 0) selected += options.length;
+    }
+  }
+
+  public void draw() {
+    strokeWeight(1);
+    if (hover)
+      stroke(100);
+    else
+      stroke(200);
+    fill(255);
+    rect(this.bounds.x1, this.bounds.y1, this.bounds.width(), this.bounds.height());
+
+    fill(0);
+    textSize(20);
+    textAlign(LEFT, CENTER);
+    text(options[selected].value, this.bounds.x1, this.bounds.y1, this.bounds.width(), this.bounds.height());
+
+    noStroke();
+    fill(255);
+    rect(this.bounds.x2 - this.bounds.height(), this.bounds.y1+1, this.bounds.height()-1, this.bounds.height()-2);
+
+    noStroke();
+    fill(0);
+    triangle(this.bounds.x2 - this.bounds.height(), this.bounds.y1+1,
+             this.bounds.x2-1, this.bounds.y1+1,
+             this.bounds.x2 - this.bounds.height()/2, this.bounds.y2-1);
+  }
+}
+interface EventListener {
+  public void onClick();
+}
+class Button extends Widget {
+  String text;
+  EventListener onClick;
+  boolean hover;
+
+  Button(String text, int x, int y, int w, int h, EventListener onClick) {
+    super(new BBox(x, y, x+w, y+h));
+    this.text = text;
+    this.onClick = onClick;
+  }
+  Button(String text, int x, int y, EventListener onClick) {
+    this(text, x, y, 100, 30, onClick);
+  }
+  Button(String text, int x, int y) {
+    this(text, x, y, null);
+  }
+
+  void addOnClick(EventListener onClick) {
+    this.onClick = onClick;
+  }
+
+  public void mouseMoved() {
+    hover = this.bounds.enclose(mouseX, mouseY);
+  }
+  public void mouseClicked() {
+    if (this.bounds.enclose(mouseX, mouseY))
+      this.onClick.onClick();
+  }
+
+  public void draw() {
+    strokeWeight(1);
+    if (hover)
+      stroke(100);
+    else
+      stroke(200);
+    fill(255);
+    rect(this.bounds.x1, this.bounds.y1, this.bounds.width(), this.bounds.height(), 5);
+
+    fill(0);
+    textSize(20);
+    textAlign(CENTER, CENTER);
+    text(text, this.bounds.x1, this.bounds.y1, this.bounds.width(), this.bounds.height());
+  }
+}
+
 Board board;
+ArrayList<Widget> widgets;
 
 int closestCol, closestRow;
 boolean colBias; // 1 is biasing to column, 0 is biasing to row
+
 public void mouseMoved() {
   //pushMatrix();
   //translate(20, 20);
   //point(mouseX, mouseY);
   //popMatrix();
+
+  for (Widget w : widgets) {
+    w.mouseMoved();
+  }
   
   final int t = 20 + SQUARE_SIZE;
   
@@ -388,6 +538,10 @@ public void mouseMoved() {
 }
 
 public void mouseReleased() {
+  for (Widget w : widgets) {
+    w.mouseClicked();
+  }
+
   // this better not be on an existing island is2g
   IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
   if (best != null) {
@@ -396,6 +550,12 @@ public void mouseReleased() {
     } else if (mouseButton == RIGHT) {
       board.addBridge(best, -1);
     }
+  }
+}
+
+public void mouseWheel(MouseEvent event) {
+  for (Widget w : widgets) {
+    w.mouseWheel(event);
   }
 }
 
@@ -468,6 +628,33 @@ public void setup() {
   //board.addIsland(4, -1, -2);
   //board.addIsland(3, 2, -1);
   //board.addIsland(1, -2, -1);
+  
+  widgets = new ArrayList<Widget>();
+  
+  Option[] options = new Option[] {
+    new Option("1", "7x7 Normal Hashi"),
+    new Option("2", "7x7 Hard Hashi"),
+    new Option("15", "7x7 Dense Hashi"),
+    new Option("3", "10x10 Easy Hashi"),
+    new Option("4", "10x10 Normal Hashi"),
+    new Option("5", "10x10 Hard Hashi"),
+    new Option("16", "10x10 Dense Hashi"),
+    new Option("6", "15x15 Easy Hashi"),
+    new Option("7", "15x15 Normal Hashi"),
+    new Option("8", "15x15 Hard Hashi"),
+    new Option("17", "15x15 Dense Hashi"),
+    new Option("9", "25x25 Easy Hashi"),
+    new Option("10", "25x25 Normal Hashi"),
+    new Option("11", "25x25 Hard Hashi"),
+    new Option("18", "25x25 Dense Hashi")
+  };
+  widgets.add(new ComboBox(5, 600, 300, options));
+  
+  widgets.add(new Button("click me", 320, 600, new EventListener() {
+    public void onClick() {
+      board.hardReset();
+    }
+  }));
 }
 
 public void draw() {
@@ -503,5 +690,9 @@ public void draw() {
       textAlign(CENTER, TOP);
       text("you win!!", 600, 20);
     }
+  }
+
+  for (Widget w : widgets) {
+    w.draw();
   }
 }
