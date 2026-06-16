@@ -37,16 +37,22 @@ class Island {
     return parseInt("" + x + y);
   }
   
-  public void draw() {
+  public void draw(boolean highlighted) {
     stroke(0);
     strokeWeight(3);
-    fill(255);
+    if (highlighted)
+      fill(230);
+    else
+      fill(255);
     circle(this.x * SQUARE_SIZE, this.y * SQUARE_SIZE, SQUARE_SIZE * 0.8);
     
     textSize(SQUARE_SIZE/2);
     textAlign(CENTER, CENTER);
     fill(0);
     text(CRUTCH_MODE ? remaining() : number, this.x * SQUARE_SIZE, this.y * SQUARE_SIZE-6);
+  }
+  public void draw() {
+    draw(false);
   }
   
   public String toString() {
@@ -223,32 +229,30 @@ class Board {
     addBridge(ip, 1);
   }
   
+  // for click-style entry
   public IslandPair getBestIslandPair(int x, int y, boolean colBias) {
-    if (islands.contains(new Island(x, y)))
-      return null;
-    
     Island closestLeft = null, closestRight = null, closestTop = null, closestBottom = null;
     
-    for (Island i: islands) {
-      if (i.y == y) { // if island is on the same row as target
-        if (i.x < x) { // if island is to the left of target
+    for (Island other: islands) {
+      if (other.y == y) { // if island is on the same row as target
+        if (other.x < x) { // if island is to the left of target
           // if island is closer, woohoo new
-          if (closestLeft == null || i.x > closestLeft.x)
-            closestLeft = i;
-        } else if (i.x > x) { // if island is to the right of target
+          if (closestLeft == null || other.x > closestLeft.x)
+            closestLeft = other;
+        } else if (other.x > x) { // if island is to the right of target
           // if island is closer, woohoo new
-          if (closestRight == null || i.x < closestRight.x)
-            closestRight = i;
+          if (closestRight == null || other.x < closestRight.x)
+            closestRight = other;
         }
-      } else if (i.x == x) { // if island is on the same column as target
-        if (i.y < y) { // if island is above target
+      } else if (other.x == x) { // if island is on the same column as target
+        if (other.y < y) { // if island is above target
           // if island is closer, woohoo new
-          if (closestTop == null || i.y > closestTop.y)
-            closestTop = i;
-        } else if (i.y > y) { // if island is below target
+          if (closestTop == null || other.y > closestTop.y)
+            closestTop = other;
+        } else if (other.y > y) { // if island is below target
           // if island is closer, woohoo new
-          if (closestBottom == null || i.y < closestBottom.y)
-            closestBottom = i;
+          if (closestBottom == null || other.y < closestBottom.y)
+            closestBottom = other;
         }
       }
     }
@@ -283,6 +287,61 @@ class Board {
       return closestVertical;
     else
       return null;
+  }
+  // for drag-style entry
+  public IslandPair getBestIslandPair(Island i, int direction) {
+    Island closest = null;
+
+    for (Island other: islands) {
+      // locate the actual island, i is just a temp fake island
+      if (other.equals(i))
+        i = other;
+
+      switch (direction) {
+      case 0: // LEFT
+        if (other.y == i.y && other.x < i.x) { // if island is on the left as target
+          // if island is closer, woohoo new
+          if (closest == null || other.x > closest.x)
+            closest = other;
+        }
+        break;
+      case 1: // RIGHT
+        if (other.y == i.y && other.x > i.x) { // if island is on the left as target
+          // if island is closer, woohoo new
+          if (closest == null || other.x < closest.x)
+            closest = other;
+        }
+        break;
+      case 2: // UP
+        if (other.x == i.x && other.y < i.y) { // if island is on the left as target
+          // if island is closer, woohoo new
+          if (closest == null || other.y > closest.y)
+            closest = other;
+        }
+        break;
+      case 3: // DOWN
+        if (other.x == i.x && other.y > i.y) { // if island is on the left as target
+          // if island is closer, woohoo new
+          if (closest == null || other.y < closest.y)
+            closest = other;
+        }
+        break;
+      }
+    }
+
+    if (closest != null) {
+      IslandPair closestPair = new IslandPair(i, closest);
+
+      boolean valid = true;
+      for (Bridge b: bridges.values())
+        if (b.strength > 0 && closestPair.collides(b))
+          valid = false;
+      
+      if (valid)
+        return closestPair;
+    }
+    
+    return null;
   }
 
   public void reset() {
@@ -320,16 +379,41 @@ class Board {
       b.draw();
     }
     
-    // draw hovered island
-    IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
-    if (best != null) {
-      strokeWeight(3);
-      stroke(200);
-      line(best.i1.x * SQUARE_SIZE, best.i1.y * SQUARE_SIZE, best.i2.x * SQUARE_SIZE, best.i2.y * SQUARE_SIZE);
+    if (mousePressed) { // draw dragged bridge
+      Island i = new Island(closestCol, closestRow);
+      if (board.islands.contains(i)) {
+        IslandPair best = board.getBestIslandPair(i, direction);
+        if (best != null) {
+          if (mouseButton == LEFT) {
+            strokeWeight(3);
+            stroke(200);
+            line(best.i1.x * SQUARE_SIZE, best.i1.y * SQUARE_SIZE, best.i2.x * SQUARE_SIZE, best.i2.y * SQUARE_SIZE);
+          } else if (mouseButton == RIGHT) {
+            strokeWeight(12);
+            stroke(200);
+            line(best.i1.x * SQUARE_SIZE, best.i1.y * SQUARE_SIZE, best.i2.x * SQUARE_SIZE, best.i2.y * SQUARE_SIZE);
+            strokeWeight(4);
+            stroke(255);
+            line(best.i1.x * SQUARE_SIZE, best.i1.y * SQUARE_SIZE, best.i2.x * SQUARE_SIZE, best.i2.y * SQUARE_SIZE);
+          }
+        }
+      }
+    } else { // draw hovered bridge
+      if (!board.islands.contains(new Island(closestCol, closestRow))) {
+        IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
+        if (best != null) {
+          strokeWeight(3);
+          stroke(200);
+          line(best.i1.x * SQUARE_SIZE, best.i1.y * SQUARE_SIZE, best.i2.x * SQUARE_SIZE, best.i2.y * SQUARE_SIZE);
+        }
+      }
     }
     
     for (Island i: islands) {
-      i.draw();
+      if (mousePressed && i.x == closestCol && i.y == closestRow)
+        i.draw(true);
+      else
+        i.draw();
     }
     
     if (DEBUG_MODE) {
@@ -499,6 +583,7 @@ ArrayList<Widget> widgets;
 
 int closestCol, closestRow;
 boolean colBias; // 1 is biasing to column, 0 is biasing to row
+int direction = -1;
 
 public void mouseMoved() {
   //pushMatrix();
@@ -537,18 +622,55 @@ public void mouseMoved() {
   colBias = colDistance < rowDistance;
 }
 
-public void mouseReleased() {
+public void mouseDragged() {
+  final int t = 20 + SQUARE_SIZE;
+  int originX = closestCol * SQUARE_SIZE + t;
+  int originY = closestRow * SQUARE_SIZE + t;
+
+  float deltaX = mouseX - originX;
+  float deltaY = mouseY - originY;
+
+  if (abs(deltaX) > abs(deltaY)) {
+    if (deltaX < 0)
+      direction = 0;
+    else
+      direction = 1;
+  } else {
+    if (deltaY < 0)
+      direction = 2;
+    else
+      direction = 3;
+  }
+}
+
+public void mouseClicked() {
   for (Widget w : widgets) {
     w.mouseClicked();
   }
 
-  // this better not be on an existing island is2g
-  IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
-  if (best != null) {
-    if (mouseButton == LEFT) {
-      board.addBridge(best);
-    } else if (mouseButton == RIGHT) {
-      board.addBridge(best, -1);
+  if (!board.islands.contains(new Island(closestCol, closestRow))) {
+    IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
+    if (best != null) {
+      if (mouseButton == LEFT) {
+        board.addBridge(best);
+      } else if (mouseButton == RIGHT) {
+        board.addBridge(best, -1);
+      }
+    }
+  }
+}
+
+public void mouseReleased() {
+  Island origin = new Island(closestCol, closestRow);
+
+  if (board.islands.contains(new Island(closestCol, closestRow))) {
+    IslandPair best = board.getBestIslandPair(new Island(closestCol, closestRow), direction);
+    if (best != null) {
+      if (mouseButton == LEFT) {
+        board.addBridge(best);
+      } else if (mouseButton == RIGHT) {
+        board.addBridge(best, -1);
+      }
     }
   }
 }
