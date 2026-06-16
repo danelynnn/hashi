@@ -21,4 +21,4 @@ this application is made in Processing 3.5.4, so compiling it will require using
    ![step3](img/step3.png)
 
 4. compiled .exe's can be found in the hashi/ folder:  
-   ![step4](img/step4.png)
+   ![step4](img/step4.png) ![step4](img/step4.5.png)
