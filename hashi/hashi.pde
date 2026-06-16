@@ -807,7 +807,7 @@ public void draw() {
       noStroke();
       fill(0, 200, 0);
       textSize(SQUARE_SIZE/2);
-      textAlign(CENTER, TOP);
+      textAlign(LEFT, TOP);
       text("you win!!", 600, 20);
     }
   }
