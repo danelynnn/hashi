@@ -708,48 +708,46 @@ public void setup() {
   //board.addBridge(new IslandPair(i8, i9), 2);
   
   // 7x7 normal, id 8,173,271
-  board = new Board(7, 7);
-  board.addIsland(4, 0, 0);
-  board.addIsland(3, 2, 0);
-  board.addIsland(1, 4, 0);
-  board.addIsland(2, 6, 0);
-  board.addIsland(5, 0, 2);
-  board.addIsland(5, 2, 2);
-  board.addIsland(2, -2, 2);
-  board.addIsland(2, -1, 3);
-  board.addIsland(2, 3, 4);
-  board.addIsland(3, -2, 4);
-  board.addIsland(3, 2, -2);
-  board.addIsland(3, -1, -2);
-  board.addIsland(3, 0, -1);
-  board.addIsland(2, -3, -1);
+  // board = new Board(7, 7);
+  // board.addIsland(4, 0, 0);
+  // board.addIsland(3, 2, 0);
+  // board.addIsland(1, 4, 0);
+  // board.addIsland(2, 6, 0);
+  // board.addIsland(5, 0, 2);
+  // board.addIsland(5, 2, 2);
+  // board.addIsland(2, -2, 2);
+  // board.addIsland(2, -1, 3);
+  // board.addIsland(2, 3, 4);
+  // board.addIsland(3, -2, 4);
+  // board.addIsland(3, 2, -2);
+  // board.addIsland(3, -1, -2);
+  // board.addIsland(3, 0, -1);
+  // board.addIsland(2, -3, -1);
   
-  // 10x10 hard, id 1,447,332
-  //board = new Board(10, 10);
-  //board.addIsland(3, 0, 0);
-  //board.addIsland(4, 2, 0);
-  //board.addIsland(5, 5, 0);
-  //board.addIsland(2, -2, 0);
-  //board.addIsland(2, 4, 1);
-  //board.addIsland(2, 0, 2);
-  //board.addIsland(4, -4, 2);
-  //board.addIsland(5, -2, 2);
-  //board.addIsland(3, 0, 4);
-  //board.addIsland(5, 2, 4);
-  //board.addIsland(3, 4, 4);
-  //board.addIsland(4, 6, 4);
-  //board.addIsland(2, -1, 4);
-  //board.addIsland(3, -2, 5);
-  //board.addIsland(5, 2, 6);
-  //board.addIsland(1, 4, 6);
-  //board.addIsland(2, -4, 7);
-  //board.addIsland(1, -2, 7);
-  //board.addIsland(2, 0, -2);
-  //board.addIsland(2, 3, -2);
-  //board.addIsland(6, 5, -2);
-  //board.addIsland(4, -1, -2);
-  //board.addIsland(3, 2, -1);
-  //board.addIsland(1, -2, -1);
+  // 10x10 normal, id 9,985,396
+  board = new Board(10, 10);
+  board.addIsland(4, 1, 0);
+  board.addIsland(6, 3, 0);
+  board.addIsland(4, -1, 0);
+  board.addIsland(2, 0, 2);
+  board.addIsland(4, 1, 3);
+  board.addIsland(7, 3, 3);
+  board.addIsland(4, -1, 3);
+  board.addIsland(2, 5, 4);
+  board.addIsland(3, 7, 4);
+  board.addIsland(5, 0, 5);
+  board.addIsland(1, 2, 5);
+  board.addIsland(1, 1, 6);
+  board.addIsland(6, 3, 6);
+  board.addIsland(4, -3, 6);
+  board.addIsland(3, -1, 6);
+  board.addIsland(5, 0, -3);
+  board.addIsland(2, 2, -3);
+  board.addIsland(2, 4, -2);
+  board.addIsland(4, -3, -2);
+  board.addIsland(2, 0, -1);
+  board.addIsland(5, 3, -1);
+  board.addIsland(4, -1, -1);
   
   widgets = new ArrayList<Widget>();
   
