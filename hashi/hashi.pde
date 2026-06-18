@@ -824,7 +824,7 @@ public void setup() {
   widgets.add(new Button("load me", 340, 640, new EventListener() {
     public void onClick() {
       int type = puzzleType.getValue();
-      board = loadGame(type, 10);
+      board = loadGame(type);
     }
   }));
 }
