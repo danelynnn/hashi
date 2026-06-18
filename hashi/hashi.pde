@@ -1,7 +1,10 @@
 import java.util.HashSet;
 
+import java.net.http.*;
+import java.net.URI;
+
 final boolean DEBUG_MODE = false;
-final boolean CRUTCH_MODE = true;
+final boolean CRUTCH_MODE = false;
 final int SQUARE_SIZE = 50;
 
 // TODO: add confetti
@@ -686,26 +689,26 @@ public void setup() {
   textFont(createFont("IdealBold.ttf", 32));
   
   // id 8,618,892
-  //board = new Board(7, 7);
-  //Island i0 = board.addIsland(3, 0, 0);
-  //Island i1 = board.addIsland(2, -1, 0);
-  //Island i2 = board.addIsland(4, 1, 1);
-  //Island i3 = board.addIsland(4, -2, 1);
-  //Island i4 = board.addIsland(2, 2, 2);
-  //Island i5 = board.addIsland(2, 1, 4);
-  //Island i6 = board.addIsland(1, -1, -2);
-  //Island i7 = board.addIsland(3, 0, -1);
-  //Island i8 = board.addIsland(5, 2, -1);
-  //Island i9 = board.addIsland(4, -2, -1);
-  //board.addBridge(new IslandPair(i0, i1));
-  //board.addBridge(new IslandPair(i1, i6));
-  //board.addBridge(new IslandPair(i0, i7), 2);
-  //board.addBridge(new IslandPair(i2, i3), 2);
-  //board.addBridge(new IslandPair(i2, i5), 2);
-  //board.addBridge(new IslandPair(i4, i8), 2);
-  //board.addBridge(new IslandPair(i3, i9), 2);
-  //board.addBridge(new IslandPair(i7, i8));
-  //board.addBridge(new IslandPair(i8, i9), 2);
+  // board = new Board(7, 7);
+  // Island i0 = board.addIsland(3, 0, 0);
+  // Island i1 = board.addIsland(2, -1, 0);
+  // Island i2 = board.addIsland(4, 1, 1);
+  // Island i3 = board.addIsland(4, -2, 1);
+  // Island i4 = board.addIsland(2, 2, 2);
+  // Island i5 = board.addIsland(2, 1, 4);
+  // Island i6 = board.addIsland(1, -1, -2);
+  // Island i7 = board.addIsland(3, 0, -1);
+  // Island i8 = board.addIsland(5, 2, -1);
+  // Island i9 = board.addIsland(4, -2, -1);
+  // board.addBridge(new IslandPair(i0, i1));
+  // board.addBridge(new IslandPair(i1, i6));
+  // board.addBridge(new IslandPair(i0, i7), 2);
+  // board.addBridge(new IslandPair(i2, i3), 2);
+  // board.addBridge(new IslandPair(i2, i5), 2);
+  // board.addBridge(new IslandPair(i4, i8), 2);
+  // board.addBridge(new IslandPair(i3, i9), 2);
+  // board.addBridge(new IslandPair(i7, i8));
+  // board.addBridge(new IslandPair(i8, i9), 2);
   
   // 7x7 normal, id 8,173,271
   // board = new Board(7, 7);
