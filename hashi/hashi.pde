@@ -1,10 +1,7 @@
 import java.util.HashSet;
 
-import java.net.http.*;
-import java.net.URI;
-
 final boolean DEBUG_MODE = false;
-final boolean CRUTCH_MODE = false;
+final boolean CRUTCH_MODE = true;
 final int SQUARE_SIZE = 50;
 
 // TODO: add confetti
@@ -150,6 +147,7 @@ class Bridge {
 }
 
 class Board {
+  int puzzleId;
   int w, h;
   HashSet<Island> islands;
   HashMap<IslandPair, Bridge> bridges;
@@ -157,7 +155,8 @@ class Board {
   private int sum;
   public int win;
   
-  public Board(int w, int h) {
+  public Board(int puzzleId, int w, int h) {
+    this.puzzleId = puzzleId;
     this.w = w;
     this.h = h;
     
@@ -473,15 +472,16 @@ abstract class Widget {
   public void keyPressed() {}
   public void draw() {}
 }
-class Option {
-  String key, value;
-  public Option(String key, String value) {
+class Option<T extends Object> {
+  T key;
+  String value;
+  public Option(T key, String value) {
     this.key = key;
     this.value = value;
   }
 }
-class ComboBox extends Widget {
-  Option[] options;
+class ComboBox<T extends Object> extends Widget {
+  Option<T>[] options;
   int selected;
 
   private boolean hover;
@@ -497,6 +497,10 @@ class ComboBox extends Widget {
 
   public void mouseMoved() {
     hover = this.bounds.enclose(mouseX, mouseY);
+  }
+
+  public T getValue() {
+    return options[selected].key;
   }
 
   public void mouseWheel(MouseEvent event) {
@@ -598,37 +602,40 @@ public void mouseMoved() {
     w.mouseMoved();
   }
   
-  final int t = 20 + SQUARE_SIZE;
+  final int tx = 20 + SQUARE_SIZE;
+  final int ty = 60 + SQUARE_SIZE;
   
   int colDistance, rowDistance;
   
   // find closest row to mouse
   // if mouse is closer to left column, pick left
-  if ((mouseX - t) % SQUARE_SIZE < SQUARE_SIZE/2) {
-    closestCol = (mouseX - t) / SQUARE_SIZE;
-    colDistance = (mouseX - t) % SQUARE_SIZE;
+  if ((mouseX - tx) % SQUARE_SIZE < SQUARE_SIZE/2) {
+    closestCol = (mouseX - tx) / SQUARE_SIZE;
+    colDistance = (mouseX - tx) % SQUARE_SIZE;
   } else { // if not, pick right
-    closestCol = (mouseX - t) / SQUARE_SIZE + 1;
-    colDistance = SQUARE_SIZE - (mouseX - t) % SQUARE_SIZE;
+    closestCol = (mouseX - tx) / SQUARE_SIZE + 1;
+    colDistance = SQUARE_SIZE - (mouseX - tx) % SQUARE_SIZE;
   }
   
   // find closest col to mouse
   // if mouse is closer to top row, pick top
-  if ((mouseY - t) % SQUARE_SIZE < SQUARE_SIZE/2) {
-    closestRow = (mouseY - t) / SQUARE_SIZE;
-    rowDistance = (mouseY - t) % SQUARE_SIZE;
+  if ((mouseY - ty) % SQUARE_SIZE < SQUARE_SIZE/2) {
+    closestRow = (mouseY - ty) / SQUARE_SIZE;
+    rowDistance = (mouseY - ty) % SQUARE_SIZE;
   } else { // if not, pick bottom
-    closestRow = (mouseY - t) / SQUARE_SIZE + 1;
-    rowDistance = SQUARE_SIZE - (mouseY - t) % SQUARE_SIZE;
+    closestRow = (mouseY - ty) / SQUARE_SIZE + 1;
+    rowDistance = SQUARE_SIZE - (mouseY - ty) % SQUARE_SIZE;
   }
   
   colBias = colDistance < rowDistance;
 }
 
 public void mouseDragged() {
-  final int t = 20 + SQUARE_SIZE;
-  int originX = closestCol * SQUARE_SIZE + t;
-  int originY = closestRow * SQUARE_SIZE + t;
+  final int tx = 20 + SQUARE_SIZE;
+  final int ty = 60 + SQUARE_SIZE;
+
+  int originX = closestCol * SQUARE_SIZE + tx;
+  int originY = closestRow * SQUARE_SIZE + ty;
 
   float deltaX = mouseX - originX;
   float deltaY = mouseY - originY;
@@ -684,6 +691,43 @@ public void mouseWheel(MouseEvent event) {
   }
 }
 
+public Board loadGame(int puzzleType, int puzzleId) {
+  JSONObject response;
+  if (puzzleId == -1)
+    response = loadJSONObject(String.format("http://127.0.0.1:5000/get_puzzle/%d", puzzleType));
+  else
+    response = loadJSONObject(String.format("http://127.0.0.1:5000/get_puzzle/%d?id=%d", puzzleType, puzzleId));
+  
+  Board board;
+  puzzleId = response.getInt("id");
+  String boardString = response.getString("board");
+
+  if ((puzzleType >= 0 && puzzleType <= 2) || puzzleType == 15) {
+    board = new Board(puzzleId, 7, 7);
+  } else if ((puzzleType >= 3 && puzzleType <= 5) || puzzleType == 16) {
+    board = new Board(puzzleId, 10, 10);
+  } else if ((puzzleType >= 6 && puzzleType <= 8) || puzzleType == 17) {
+    board = new Board(puzzleId, 15, 15);
+  } else {
+    board = new Board(puzzleId, 25, 25);
+  }
+
+  if (DEBUG_MODE) println(boardString);
+
+  int index = 0;
+  for (char c : boardString.toCharArray()) {
+    if (c >= '0' && c <= '9')
+      board.addIsland(c - '0', index % board.w, index++ / board.w);
+    else
+      index += c - 'a' + 1;
+  }
+
+  return board;
+}
+public Board loadGame(int puzzleType) {
+  return loadGame(puzzleType, -1);
+}
+
 public void setup() {
   size(720, 720);
   textFont(createFont("IdealBold.ttf", 32));
@@ -728,63 +772,73 @@ public void setup() {
   // board.addIsland(2, -3, -1);
   
   // 10x10 normal, id 9,985,396
-  board = new Board(10, 10);
-  board.addIsland(4, 1, 0);
-  board.addIsland(6, 3, 0);
-  board.addIsland(4, -1, 0);
-  board.addIsland(2, 0, 2);
-  board.addIsland(4, 1, 3);
-  board.addIsland(7, 3, 3);
-  board.addIsland(4, -1, 3);
-  board.addIsland(2, 5, 4);
-  board.addIsland(3, 7, 4);
-  board.addIsland(5, 0, 5);
-  board.addIsland(1, 2, 5);
-  board.addIsland(1, 1, 6);
-  board.addIsland(6, 3, 6);
-  board.addIsland(4, -3, 6);
-  board.addIsland(3, -1, 6);
-  board.addIsland(5, 0, -3);
-  board.addIsland(2, 2, -3);
-  board.addIsland(2, 4, -2);
-  board.addIsland(4, -3, -2);
-  board.addIsland(2, 0, -1);
-  board.addIsland(5, 3, -1);
-  board.addIsland(4, -1, -1);
-  
+  // board = new Board(10, 10);
+  // board.addIsland(4, 1, 0);
+  // board.addIsland(6, 3, 0);
+  // board.addIsland(4, -1, 0);
+  // board.addIsland(2, 0, 2);
+  // board.addIsland(4, 1, 3);
+  // board.addIsland(7, 3, 3);
+  // board.addIsland(4, -1, 3);
+  // board.addIsland(2, 5, 4);
+  // board.addIsland(3, 7, 4);
+  // board.addIsland(5, 0, 5);
+  // board.addIsland(1, 2, 5);
+  // board.addIsland(1, 1, 6);
+  // board.addIsland(6, 3, 6);
+  // board.addIsland(4, -3, 6);
+  // board.addIsland(3, -1, 6);
+  // board.addIsland(5, 0, -3);
+  // board.addIsland(2, 2, -3);
+  // board.addIsland(2, 4, -2);
+  // board.addIsland(4, -3, -2);
+  // board.addIsland(2, 0, -1);
+  // board.addIsland(5, 3, -1);
+  // board.addIsland(4, -1, -1);
+
+  board = new Board(-1, 7, 7);
+
   widgets = new ArrayList<Widget>();
   
   Option[] options = new Option[] {
-    new Option("1", "7x7 Normal Hashi"),
-    new Option("2", "7x7 Hard Hashi"),
-    new Option("15", "7x7 Dense Hashi"),
-    new Option("3", "10x10 Easy Hashi"),
-    new Option("4", "10x10 Normal Hashi"),
-    new Option("5", "10x10 Hard Hashi"),
-    new Option("16", "10x10 Dense Hashi"),
-    new Option("6", "15x15 Easy Hashi"),
-    new Option("7", "15x15 Normal Hashi"),
-    new Option("8", "15x15 Hard Hashi"),
-    new Option("17", "15x15 Dense Hashi"),
-    new Option("9", "25x25 Easy Hashi"),
-    new Option("10", "25x25 Normal Hashi"),
-    new Option("11", "25x25 Hard Hashi"),
-    new Option("18", "25x25 Dense Hashi")
+    new Option<Integer>(0, "7x7 Easy Hashi"),
+    new Option<Integer>(1, "7x7 Normal Hashi"),
+    new Option<Integer>(2, "7x7 Hard Hashi"),
+    new Option<Integer>(15, "7x7 Dense Hashi"),
+    new Option<Integer>(3, "10x10 Easy Hashi"),
+    new Option<Integer>(4, "10x10 Normal Hashi"),
+    new Option<Integer>(5, "10x10 Hard Hashi"),
+    new Option<Integer>(16, "10x10 Dense Hashi"),
+    new Option<Integer>(6, "15x15 Easy Hashi"),
+    new Option<Integer>(7, "15x15 Normal Hashi"),
+    new Option<Integer>(8, "15x15 Hard Hashi"),
+    new Option<Integer>(17, "15x15 Dense Hashi"),
+    new Option<Integer>(9, "25x25 Easy Hashi"),
+    new Option<Integer>(10, "25x25 Normal Hashi"),
+    new Option<Integer>(11, "25x25 Hard Hashi"),
+    new Option<Integer>(18, "25x25 Dense Hashi")
   };
-  widgets.add(new ComboBox(5, 600, 300, options));
+  final ComboBox<Integer> puzzleType = new ComboBox<Integer>(20, 640, 300, options);
+  widgets.add(puzzleType);
   
-  widgets.add(new Button("click me", 320, 600, new EventListener() {
+  widgets.add(new Button("load me", 340, 640, new EventListener() {
     public void onClick() {
-      board.hardReset();
+      int type = puzzleType.getValue();
+      board = loadGame(type, 10);
     }
   }));
 }
 
 public void draw() {
   background(255);
+
+  fill(0);
+  textSize(SQUARE_SIZE/2);
+  textAlign(LEFT, TOP);
+  text(String.format("id# %d", board.puzzleId), 20, 20);
   
   pushMatrix();
-  translate(20, 20);
+  translate(20, 60);
   board.draw();
   
   // show cursor position
@@ -792,28 +846,28 @@ public void draw() {
     pushMatrix();
     translate(SQUARE_SIZE, SQUARE_SIZE);
     stroke(255,0,0);
-    if (closestRow >= 0 && closestRow < 7 &&
-        closestCol >= 0 && closestCol < 7)
+    if (closestRow >= 0 && closestRow < board.h &&
+        closestCol >= 0 && closestCol < board.w)
       point(closestCol * SQUARE_SIZE, closestRow * SQUARE_SIZE);
     popMatrix();
   }
-  popMatrix();
   
   if (DEBUG_MODE) {
     noStroke();
     if (board.win == board.islands.size()) fill(0, 200, 0); else fill(0);
     textSize(SQUARE_SIZE/2);
     textAlign(CENTER, TOP);
-    text(board.win, 600, 20);
+    text(board.win, 580, 0);
   } else {
     if (board.win == board.islands.size()) {
       noStroke();
       fill(0, 200, 0);
       textSize(SQUARE_SIZE/2);
       textAlign(LEFT, TOP);
-      text("you win!!", 600, 20);
+      text("you win!!", 580, 0);
     }
   }
+  popMatrix();
 
   for (Widget w : widgets) {
     w.draw();

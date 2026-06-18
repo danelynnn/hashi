@@ -1,24 +1,29 @@
-from flask import Flask
+from flask import Flask, request
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.select import Select
 
 from html.parser import HTMLParser
 
 import numpy as np
 import json
+from random import randint
 
 app = Flask(__name__)
 
 options = Options()
 options.page_load_strategy = 'eager'
-# options.add_argument('--headless=new')
+options.add_argument('--headless=new')
 driver = webdriver.Chrome(options=options)
 
-def loadPuzzle(puzzleId):
+def loadPuzzle(puzzleType, puzzleId):
     global driver
     driver.get("https://www.puzzle-bridges.com/specific.php")
+
+    size = Select(driver.find_element(By.ID, 'size'))
+    size.select_by_value(puzzleType)
 
     specId = driver.find_element(By.ID, 'specid')
     specId.send_keys(puzzleId)
@@ -70,13 +75,27 @@ class GameReader(HTMLParser):
         return
             
 
-@app.route('/get_puzzle/<puzzleId>')
-def getPuzzle(puzzleId):
-    source = loadPuzzle(puzzleId)
+@app.route('/get_puzzle/<puzzleType>')
+def getPuzzle(puzzleType):
+    id = request.args.get('id', -1)
+    if id == -1:
+        id = randint(1000000, 9999999)
+
+    source = loadPuzzle(puzzleType, id)
     reader = GameReader()
     reader.feed(source)
 
-    idx = np.linspace(0, reader.board.shape[0], 7, endpoint=False, dtype=int)
+    puzzleType = int(puzzleType)
+    if 0 <= puzzleType <= 2 or puzzleType == 15:
+        step = 7
+    elif 3 <= puzzleType <= 5 or puzzleType == 16:
+        step = 10
+    elif 6 <= puzzleType <= 8 or puzzleType == 17:
+        step = 15
+    else:
+        step = 25
+
+    idx = np.linspace(0, reader.board.shape[0], step, endpoint=False, dtype=int)
     compressed = reader.board[idx, :][:, idx]
     print(compressed)
 
@@ -93,7 +112,7 @@ def getPuzzle(puzzleId):
                 counter = 0
             lst.append(str(flat[i]))
 
-    return json.dumps({'id': puzzleId, 'board': ''.join(lst)})
+    return json.dumps({'id': id, 'board': ''.join(lst)})
 
 if __name__ == "__main__":
     app.run(debug=True)
