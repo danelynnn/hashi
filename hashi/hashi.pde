@@ -537,6 +537,83 @@ class ComboBox<T extends Object> extends Widget {
              this.bounds.x2 - this.bounds.height()/2, this.bounds.y2-1);
   }
 }
+class TextBox extends Widget {
+  String placeholder;
+  StringBuffer text;
+
+  int type = 0; // 0 for string, 1 for int, idfk w/e
+  private boolean hover = false;
+  private boolean focus = false;
+
+  public TextBox(int x, int y, int w, int h) {
+    super(new BBox(x, y, x+w, y+h));
+    this.text = new StringBuffer("");
+  }
+  public TextBox(int x, int y) {
+    this(x, y, 300, 30);
+  }
+  public TextBox(String placeholder, int x, int y, int w, int h) {
+    this(x, y, w, h);
+    this.placeholder = placeholder;
+  }
+  public TextBox(String placeholder, int x, int y) {
+    this(x, y);
+    this.placeholder = placeholder;
+  }
+
+  public void mouseMoved() {
+    hover = this.bounds.enclose(mouseX, mouseY);
+  }
+  public void mouseClicked() {
+    if (this.bounds.enclose(mouseX, mouseY)) {
+      this.focus = true;
+      if (mouseButton == RIGHT) {
+        // clear text
+        this.text.setLength(0);
+      }
+    } else {
+      this.focus = false;
+    }
+  }
+
+  public void keyPressed() {
+    if (focus) {
+      if (key == BACKSPACE) {
+        if (text.length() > 0)
+          text.setLength(text.length() - 1);
+      } else {
+        if (type == 1) {
+          if (key >= '0' && key <= '9')
+            this.text.append(key);
+        } else
+          this.text.append(key);
+      }
+    }
+  }
+
+  public String getText() {
+    return text.toString();
+  }
+
+  public void draw() {
+    if (focus || hover)
+      stroke(100);
+    else
+      stroke(200);
+    
+    fill(255);
+    rect(bounds.x1, bounds.y1, bounds.width(), bounds.height());
+
+    textAlign(LEFT, TOP);
+    if (this.text.length() > 0) {
+      fill(0);
+      text(this.text.toString(), bounds.x1, bounds.y1);
+    } else {
+      fill(200);
+      text(this.placeholder, bounds.x1, bounds.y1);
+    }
+  }
+}
 interface EventListener {
   public void onClick();
 }
@@ -685,6 +762,12 @@ public void mouseReleased() {
   }
 }
 
+public void keyPressed() {
+  for (Widget w : widgets) {
+    w.keyPressed();
+  }
+}
+
 public void mouseWheel(MouseEvent event) {
   for (Widget w : widgets) {
     w.mouseWheel(event);
@@ -731,70 +814,6 @@ public Board loadGame(int puzzleType) {
 public void setup() {
   size(720, 720);
   textFont(createFont("IdealBold.ttf", 32));
-  
-  // id 8,618,892
-  // board = new Board(7, 7);
-  // Island i0 = board.addIsland(3, 0, 0);
-  // Island i1 = board.addIsland(2, -1, 0);
-  // Island i2 = board.addIsland(4, 1, 1);
-  // Island i3 = board.addIsland(4, -2, 1);
-  // Island i4 = board.addIsland(2, 2, 2);
-  // Island i5 = board.addIsland(2, 1, 4);
-  // Island i6 = board.addIsland(1, -1, -2);
-  // Island i7 = board.addIsland(3, 0, -1);
-  // Island i8 = board.addIsland(5, 2, -1);
-  // Island i9 = board.addIsland(4, -2, -1);
-  // board.addBridge(new IslandPair(i0, i1));
-  // board.addBridge(new IslandPair(i1, i6));
-  // board.addBridge(new IslandPair(i0, i7), 2);
-  // board.addBridge(new IslandPair(i2, i3), 2);
-  // board.addBridge(new IslandPair(i2, i5), 2);
-  // board.addBridge(new IslandPair(i4, i8), 2);
-  // board.addBridge(new IslandPair(i3, i9), 2);
-  // board.addBridge(new IslandPair(i7, i8));
-  // board.addBridge(new IslandPair(i8, i9), 2);
-  
-  // 7x7 normal, id 8,173,271
-  // board = new Board(7, 7);
-  // board.addIsland(4, 0, 0);
-  // board.addIsland(3, 2, 0);
-  // board.addIsland(1, 4, 0);
-  // board.addIsland(2, 6, 0);
-  // board.addIsland(5, 0, 2);
-  // board.addIsland(5, 2, 2);
-  // board.addIsland(2, -2, 2);
-  // board.addIsland(2, -1, 3);
-  // board.addIsland(2, 3, 4);
-  // board.addIsland(3, -2, 4);
-  // board.addIsland(3, 2, -2);
-  // board.addIsland(3, -1, -2);
-  // board.addIsland(3, 0, -1);
-  // board.addIsland(2, -3, -1);
-  
-  // 10x10 normal, id 9,985,396
-  // board = new Board(10, 10);
-  // board.addIsland(4, 1, 0);
-  // board.addIsland(6, 3, 0);
-  // board.addIsland(4, -1, 0);
-  // board.addIsland(2, 0, 2);
-  // board.addIsland(4, 1, 3);
-  // board.addIsland(7, 3, 3);
-  // board.addIsland(4, -1, 3);
-  // board.addIsland(2, 5, 4);
-  // board.addIsland(3, 7, 4);
-  // board.addIsland(5, 0, 5);
-  // board.addIsland(1, 2, 5);
-  // board.addIsland(1, 1, 6);
-  // board.addIsland(6, 3, 6);
-  // board.addIsland(4, -3, 6);
-  // board.addIsland(3, -1, 6);
-  // board.addIsland(5, 0, -3);
-  // board.addIsland(2, 2, -3);
-  // board.addIsland(2, 4, -2);
-  // board.addIsland(4, -3, -2);
-  // board.addIsland(2, 0, -1);
-  // board.addIsland(5, 3, -1);
-  // board.addIsland(4, -1, -1);
 
   board = new Board(-1, 7, 7);
 
@@ -820,11 +839,20 @@ public void setup() {
   };
   final ComboBox<Integer> puzzleType = new ComboBox<Integer>(20, 640, 300, options);
   widgets.add(puzzleType);
+
+  final TextBox puzzleId = new TextBox("enter a puzzle ID", 20, 680);
+  puzzleId.type = 1;
+  widgets.add(puzzleId);
   
   widgets.add(new Button("load me", 340, 640, new EventListener() {
     public void onClick() {
       int type = puzzleType.getValue();
-      board = loadGame(type);
+      String id = puzzleId.getText();
+
+      if (id.length() > 0)
+        board = loadGame(type, parseInt(id));
+      else
+        board = loadGame(type);
     }
   }));
 }

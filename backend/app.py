@@ -2,7 +2,7 @@ from flask import Flask, request
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.select import Select
 
 from html.parser import HTMLParser
@@ -16,7 +16,7 @@ app = Flask(__name__)
 options = Options()
 options.page_load_strategy = 'eager'
 options.add_argument('--headless=new')
-driver = webdriver.Chrome(options=options)
+driver = webdriver.Firefox(options=options)
 
 def loadPuzzle(puzzleType, puzzleId):
     global driver
