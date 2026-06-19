@@ -562,16 +562,15 @@ class TextBox extends Widget {
     super(new BBox(x, y, x+w, y+h));
     this.text = new StringBuffer("");
   }
-  public TextBox(int x, int y) {
-    this(x, y, 300, 30);
+  public TextBox(int x, int y, int w) {
+    this(x, y, w, 30);
   }
   public TextBox(String placeholder, int x, int y, int w, int h) {
     this(x, y, w, h);
     this.placeholder = placeholder;
   }
-  public TextBox(String placeholder, int x, int y) {
-    this(x, y);
-    this.placeholder = placeholder;
+  public TextBox(String placeholder, int x, int y, int w) {
+    this(placeholder, x, y, w, 30);
   }
 
   public void mouseMoved() {
@@ -852,14 +851,14 @@ public void setup() {
     new Option<Integer>(11, "25x25 Hard Hashi"),
     new Option<Integer>(18, "25x25 Dense Hashi")
   };
-  final ComboBox<Integer> puzzleType = new ComboBox<Integer>(20, 620, 300, options);
+  final ComboBox<Integer> puzzleType = new ComboBox<Integer>(20, 620, 250, options);
   widgets.add(puzzleType);
 
-  final TextBox puzzleId = new TextBox("enter a puzzle ID", 20, 660);
+  final TextBox puzzleId = new TextBox("enter a puzzle ID", 20, 660, 250);
   puzzleId.type = 1;
   widgets.add(puzzleId);
   
-  widgets.add(new Button("load me", 340, 620, new EventListener() {
+  widgets.add(new Button("load me", 280, 620, new EventListener() {
     public void onClick() {
       int type = puzzleType.getValue();
       String id = puzzleId.getText();

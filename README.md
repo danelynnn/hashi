@@ -20,9 +20,9 @@ so i quit.
 
 ## about, pt 3
 
-fast forward to like, 6/7/2026, when I, out of the blue, decided to brush the dirt off of this two-year-old project. with the benefit of hindsight, I realised that maybe reinventing the entire level generation algorithm seemed a bit foolish, but also, kinda dull? so, I put it aside, and decided to actually make the game first, and hardcoding the levels.
+fast forward to like, 6/7/2026, when I, out of the blue, decided to brush the dirt off of this two-year-old project. with the benefit of hindsight, I realised that maybe reinventing the entire level generation algorithm seemed a bit foolish, but also, kinda dull? so, I decided to put it aside, and actually first just make the game, using hardcoded levels just copied manually from the website.
 
-and, as fortune may have it, in circling back to the "level gen" obstacle, I kinda realised there was a much better option than reinventing the level gen algorithm (foreshadowing)
+as fortune may have it, when I eventually did have to circle back to the "level gen" obstacle, I actually realised there was a much better option than reinventing the level gen algorithm (foreshadowing)
 
 and about a week and a half later, after about a couple days of work, I now present, the most over(under??)engineered implementation of Hashi, the hit puzzle game :D
 
