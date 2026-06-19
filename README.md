@@ -4,7 +4,6 @@ it's hashi (/hæʃi/)
 
 ## TODO
 
-- make a text field to enter puzzle ID
 - confetti
 
 ## compiling into a .exe

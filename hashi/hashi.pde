@@ -4,6 +4,9 @@ final boolean DEBUG_MODE = false;
 final boolean CRUTCH_MODE = true;
 final int SQUARE_SIZE = 50;
 
+int boardX = 20;
+int boardY = 60;
+
 // TODO: add confetti
 
 class Island {
@@ -27,6 +30,10 @@ class Island {
   
   public int remaining() {
     return number - bridges;
+  }
+
+  public void clear() {
+    bridges = 0;
   }
   
   public boolean equals(Object other) {
@@ -147,7 +154,7 @@ class Bridge {
 }
 
 class Board {
-  int puzzleId;
+  String puzzleId;
   int w, h;
   HashSet<Island> islands;
   HashMap<IslandPair, Bridge> bridges;
@@ -155,7 +162,7 @@ class Board {
   private int sum;
   public int win;
   
-  public Board(int puzzleId, int w, int h) {
+  public Board(String puzzleId, int w, int h) {
     this.puzzleId = puzzleId;
     this.w = w;
     this.h = h;
@@ -348,6 +355,8 @@ class Board {
 
   public void reset() {
     bridges.clear();
+    for (Island i: islands)
+      i.clear();
     calculateSum();
   }
   public void hardReset() {
@@ -381,9 +390,11 @@ class Board {
       b.draw();
     }
     
+    boolean dragging = false;
     if (mousePressed) { // draw dragged bridge
       Island i = new Island(closestCol, closestRow);
       if (board.islands.contains(i)) {
+        dragging = true;
         IslandPair best = board.getBestIslandPair(i, direction);
         if (best != null) {
           if (mouseButton == LEFT) {
@@ -400,7 +411,9 @@ class Board {
           }
         }
       }
-    } else { // draw hovered bridge
+    }
+    
+    if (!dragging) { // draw hovered bridge
       if (!board.islands.contains(new Island(closestCol, closestRow))) {
         IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
         if (best != null) {
@@ -679,8 +692,8 @@ public void mouseMoved() {
     w.mouseMoved();
   }
   
-  final int tx = 20 + SQUARE_SIZE;
-  final int ty = 60 + SQUARE_SIZE;
+  final int tx = boardX + SQUARE_SIZE;
+  final int ty = boardY + SQUARE_SIZE;
   
   int colDistance, rowDistance;
   
@@ -708,8 +721,8 @@ public void mouseMoved() {
 }
 
 public void mouseDragged() {
-  final int tx = 20 + SQUARE_SIZE;
-  final int ty = 60 + SQUARE_SIZE;
+  final int tx = boardX + SQUARE_SIZE;
+  final int ty = boardY + SQUARE_SIZE;
 
   int originX = closestCol * SQUARE_SIZE + tx;
   int originY = closestRow * SQUARE_SIZE + ty;
@@ -730,13 +743,15 @@ public void mouseDragged() {
   }
 }
 
-public void mouseClicked() {
+public void mouseReleased() {
   for (Widget w : widgets) {
     w.mouseClicked();
   }
 
-  if (!board.islands.contains(new Island(closestCol, closestRow))) {
-    IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
+  Island origin = new Island(closestCol, closestRow);
+
+  if (board.islands.contains(new Island(closestCol, closestRow))) {
+    IslandPair best = board.getBestIslandPair(new Island(closestCol, closestRow), direction);
     if (best != null) {
       if (mouseButton == LEFT) {
         board.addBridge(best);
@@ -744,14 +759,8 @@ public void mouseClicked() {
         board.addBridge(best, -1);
       }
     }
-  }
-}
-
-public void mouseReleased() {
-  Island origin = new Island(closestCol, closestRow);
-
-  if (board.islands.contains(new Island(closestCol, closestRow))) {
-    IslandPair best = board.getBestIslandPair(new Island(closestCol, closestRow), direction);
+  } else {
+    IslandPair best = board.getBestIslandPair(closestCol, closestRow, colBias);
     if (best != null) {
       if (mouseButton == LEFT) {
         board.addBridge(best);
@@ -779,20 +788,20 @@ public Board loadGame(int puzzleType, int puzzleId) {
   if (puzzleId == -1)
     response = loadJSONObject(String.format("http://127.0.0.1:5000/get_puzzle/%d", puzzleType));
   else
-    response = loadJSONObject(String.format("http://127.0.0.1:5000/get_puzzle/%d?id=%d", puzzleType, puzzleId));
+    response = loadJSONObject(String.format("http://127.0.0.1:5000/get_puzzle/%d?id=%s", puzzleType, puzzleId));
   
   Board board;
-  puzzleId = response.getInt("id");
+  String id = response.getString("id");
   String boardString = response.getString("board");
 
   if ((puzzleType >= 0 && puzzleType <= 2) || puzzleType == 15) {
-    board = new Board(puzzleId, 7, 7);
+    board = new Board(id, 7, 7);
   } else if ((puzzleType >= 3 && puzzleType <= 5) || puzzleType == 16) {
-    board = new Board(puzzleId, 10, 10);
+    board = new Board(id, 10, 10);
   } else if ((puzzleType >= 6 && puzzleType <= 8) || puzzleType == 17) {
-    board = new Board(puzzleId, 15, 15);
+    board = new Board(id, 15, 15);
   } else {
-    board = new Board(puzzleId, 25, 25);
+    board = new Board(id, 25, 25);
   }
 
   if (DEBUG_MODE) println(boardString);
@@ -815,9 +824,15 @@ public void setup() {
   size(720, 720);
   textFont(createFont("IdealBold.ttf", 32));
 
-  board = new Board(-1, 7, 7);
+  board = new Board("blank", 7, 7);
 
   widgets = new ArrayList<Widget>();
+
+  widgets.add(new Button("reset", 180, 20, new EventListener() {
+    public void onClick() {
+      board.reset();
+    }
+  }));
   
   Option[] options = new Option[] {
     new Option<Integer>(0, "7x7 Easy Hashi"),
@@ -837,14 +852,14 @@ public void setup() {
     new Option<Integer>(11, "25x25 Hard Hashi"),
     new Option<Integer>(18, "25x25 Dense Hashi")
   };
-  final ComboBox<Integer> puzzleType = new ComboBox<Integer>(20, 640, 300, options);
+  final ComboBox<Integer> puzzleType = new ComboBox<Integer>(20, 620, 300, options);
   widgets.add(puzzleType);
 
-  final TextBox puzzleId = new TextBox("enter a puzzle ID", 20, 680);
+  final TextBox puzzleId = new TextBox("enter a puzzle ID", 20, 660);
   puzzleId.type = 1;
   widgets.add(puzzleId);
   
-  widgets.add(new Button("load me", 340, 640, new EventListener() {
+  widgets.add(new Button("load me", 340, 620, new EventListener() {
     public void onClick() {
       int type = puzzleType.getValue();
       String id = puzzleId.getText();
@@ -863,10 +878,10 @@ public void draw() {
   fill(0);
   textSize(SQUARE_SIZE/2);
   textAlign(LEFT, TOP);
-  text(String.format("id# %d", board.puzzleId), 20, 20);
+  text(String.format("id# %s", board.puzzleId), 20, 20);
   
   pushMatrix();
-  translate(20, 60);
+  translate(boardX, boardY);
   board.draw();
   
   // show cursor position
