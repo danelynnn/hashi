@@ -9,7 +9,6 @@ from html.parser import HTMLParser
 
 import numpy as np
 import json
-from random import randint
 
 app = Flask(__name__)
 
