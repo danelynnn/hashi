@@ -6,7 +6,7 @@ it's hashi (/hæʃi/)
 
 on the fateful day of (around) March 5, 2024, my friend introduced me to the wonderful little game known as Hashi(wokakero). it's a lovely little puzzle game where there are islands, with a number on them, and bridges! the number says how many bridges it needs to be connected to it, and... yeah [here](https://www.puzzle-bridges.com/), just play it, it'll help a lot more than this explanation
 
-for some reason, though, my first instinct while playing this game as a wee novice wasn't "wow that's cool I should learn this over time"; it was, instead: "damn y'know I wish the game would actually tell me how many bridges were "left to build" on an island, not the original number, who needs that". this sparked an incredible argument where my kind, patient friend, suggested that "that would probably trivialise the game". I disagreed, and after a couple back and forths, I had a pretty bonkers idea
+for some reason, though, my first instinct while playing this game as a wee novice wasn't "wow that's cool I should learn this over time"; it was, instead: "damn y'know I wish the game would actually tell me how many bridges were "left to build" on an island, not the original number, who needs that". this sparked an incredible argument where my kind, patient friend, suggested that "that would probably trivialise the game". I disagreed, and after a couple back and forths, I had a pretty bonkers idea:
 
 what if I just remade the entire game from scratch, but implemented this "feature"?
 
@@ -24,7 +24,7 @@ fast forward to like, 6/7/2026, when I, out of the blue, decided to brush the di
 
 and, as fortune may have it, in circling back to the "level gen" obstacle, I kinda realised there was a much better option than reinventing the level gen algorithm (foreshadowing)
 
-and about a week and a half later, after about a couple days of work, I now present, the most over(under??)engineered implementation of Hashi, the hit puzzle game
+and about a week and a half later, after about a couple days of work, I now present, the most over(under??)engineered implementation of Hashi, the hit puzzle game :D
 
 ## technical details
 
