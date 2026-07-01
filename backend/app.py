@@ -2,7 +2,7 @@ from flask import Flask, request
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import WebDriverException
 
@@ -15,8 +15,8 @@ app = Flask(__name__)
 
 options = Options()
 options.page_load_strategy = 'eager'
-# options.add_argument('--headless=new')
-driver = webdriver.Chrome(options=options)
+options.add_argument('--headless=new')
+driver = webdriver.Firefox(options=options)
 
 
 def loadPuzzle(puzzleType, puzzleId):
@@ -120,7 +120,6 @@ class GameReader(HTMLParser):
 @app.route('/get_puzzle/<puzzleType>')
 def getPuzzle(puzzleType):
     id = request.args.get('id', -1)
-    print(puzzleType)
     id, source = loadPuzzle(puzzleType, id)
     if not source:
         return {'id': str(id), 'board': ''}
